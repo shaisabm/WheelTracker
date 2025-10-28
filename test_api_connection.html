@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Connection Test</title>
+</head>
+<body>
+    <h1>Wheel Tracker API Connection Test</h1>
+    <button onclick="testConnection()">Test API Connection</button>
+    <div id="result"></div>
+
+    <script>
+        async function testConnection() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+
+            try {
+                // Test 1: Fetch positions
+                const positionsResponse = await fetch('http://localhost:8000/api/positions/');
+                const positions = await positionsResponse.json();
+
+                // Test 2: Fetch summary
+                const summaryResponse = await fetch('http://localhost:8000/api/positions/summary/');
+                const summary = await summaryResponse.json();
+
+                resultDiv.innerHTML = `
+                    <h2 style="color: green;">✓ Connection Successful!</h2>
+                    <h3>Positions:</h3>
+                    <pre>${JSON.stringify(positions, null, 2).substring(0, 500)}...</pre>
+                    <h3>Summary:</h3>
+                    <pre>${JSON.stringify(summary, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h2 style="color: red;">✗ Connection Failed!</h2>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p><strong>Details:</strong> ${error.stack}</p>
+                    <h3>Troubleshooting:</h3>
+                    <ul>
+                        <li>Make sure Django server is running: <code>python manage.py runserver</code></li>
+                        <li>Check that you can access: <a href="http://localhost:8000/api/positions/" target="_blank">http://localhost:8000/api/positions/</a></li>
+                        <li>Check browser console for CORS errors (F12)</li>
+                    </ul>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

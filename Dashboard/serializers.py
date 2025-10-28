@@ -1,0 +1,114 @@
+from rest_framework import serializers
+from .models import Position
+from decimal import Decimal
+
+
+class PositionSerializer(serializers.ModelSerializer):
+    """Serializer for Position model with calculated fields"""
+
+    # Wheel cycle fields
+    wheel_cycle_number = serializers.IntegerField(read_only=True)
+    is_wheel_complete = serializers.BooleanField(read_only=True)
+
+    # Calculated read-only fields
+    profit_loss = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True
+    )
+    ar_if_held_to_expiration = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True, allow_null=True
+    )
+    ar_of_closed_trade = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True, allow_null=True
+    )
+    ar_on_realized_premium = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True, allow_null=True
+    )
+    ar_on_remaining_premium = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True, allow_null=True
+    )
+    percent_premium_earned = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True, allow_null=True
+    )
+    set_break_even_price_puts = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True, allow_null=True
+    )
+    is_open = serializers.BooleanField(read_only=True)
+    days_in_trade = serializers.IntegerField(read_only=True)
+    days_to_expiration = serializers.IntegerField(read_only=True)
+    days_open_to_expiration = serializers.IntegerField(read_only=True)
+    collateral_requirement = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True
+    )
+
+    class Meta:
+        model = Position
+        fields = [
+            'id',
+            'open_date',
+            'stock',
+            'set_number',
+            'expiration',
+            'type',
+            'num_contracts',
+            'strike',
+            'premium',
+            'open_fees',
+            'close_date',
+            'assigned',
+            'premium_paid_to_close',
+            'close_fees',
+            'notes',
+            'current_option_price',
+            'created_at',
+            'updated_at',
+            # Calculated fields
+            'is_open',
+            'days_in_trade',
+            'days_to_expiration',
+            'days_open_to_expiration',
+            'profit_loss',
+            'collateral_requirement',
+            'ar_if_held_to_expiration',
+            'ar_of_closed_trade',
+            'ar_on_realized_premium',
+            'ar_on_remaining_premium',
+            'percent_premium_earned',
+            'set_break_even_price_puts',
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+
+    def validate(self, data):
+        """Validate position data"""
+        # If close_date is provided, ensure premium_paid_to_close is also provided
+        if data.get('close_date') and data.get('premium_paid_to_close') is None:
+            raise serializers.ValidationError(
+                "premium_paid_to_close is required when close_date is provided"
+            )
+
+        # Validate expiration is after open_date
+        if data.get('open_date') and data.get('expiration'):
+            if data['expiration'] < data['open_date']:
+                raise serializers.ValidationError(
+                    "Expiration date must be after open date"
+                )
+
+        # Validate close_date is after open_date
+        if data.get('open_date') and data.get('close_date'):
+            if data['close_date'] < data['open_date']:
+                raise serializers.ValidationError(
+                    "Close date must be after open date"
+                )
+
+        return data
+
+
+class PositionSummarySerializer(serializers.Serializer):
+    """Serializer for position summary statistics"""
+    total_positions = serializers.IntegerField()
+    open_positions = serializers.IntegerField()
+    closed_positions = serializers.IntegerField()
+    total_profit_loss = serializers.DecimalField(max_digits=12, decimal_places=2)
+    total_premium_collected = serializers.DecimalField(max_digits=12, decimal_places=2)
+    total_collateral_at_risk = serializers.DecimalField(max_digits=12, decimal_places=2)
+    average_ar_closed_trades = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True)
+    stocks_traded = serializers.ListField(child=serializers.CharField())

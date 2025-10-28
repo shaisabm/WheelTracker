@@ -1,2 +1,233 @@
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
+<script>
+	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
+	import { api } from '$lib/api';
+	import PositionForm from '$lib/components/PositionForm.svelte';
+	import PositionTable from '$lib/components/PositionTable.svelte';
+	import Summary from '$lib/components/Summary.svelte';
+
+	let positions = $state([]);
+	let summary = $state(null);
+	let loading = $state(true);
+	let error = $state(null);
+	let showForm = $state(false);
+	let editingPosition = $state(null);
+	let filterStock = $state('');
+	let filterType = $state('');
+	let filterStatus = $state('all'); // all, open, closed
+
+	onMount(() => {
+		loadData();
+	});
+
+	async function loadData() {
+		if (!browser) return;
+
+		loading = true;
+		error = null;
+		try {
+			const [positionsData, summaryData] = await Promise.all([
+				api.getPositions(),
+				api.getSummary()
+			]);
+			positions = positionsData.results || positionsData;
+			summary = summaryData;
+		} catch (err) {
+			error = err.message;
+			console.error('Error loading data:', err);
+		} finally {
+			loading = false;
+		}
+	}
+
+	async function handleSave(position) {
+		try {
+			if (editingPosition) {
+				await api.updatePosition(editingPosition.id, position);
+			} else {
+				await api.createPosition(position);
+			}
+			showForm = false;
+			editingPosition = null;
+			await loadData();
+		} catch (err) {
+			error = err.message;
+		}
+	}
+
+	async function handleEdit(position) {
+		editingPosition = position;
+		showForm = true;
+	}
+
+	async function handleDelete(id) {
+		if (!confirm('Are you sure you want to delete this position?')) return;
+
+		try {
+			await api.deletePosition(id);
+			await loadData();
+		} catch (err) {
+			error = err.message;
+		}
+	}
+
+	async function handleFetchPrice(id) {
+		try {
+			await api.fetchCurrentPrice(id);
+			await loadData();
+		} catch (err) {
+			error = err.message;
+		}
+	}
+
+	async function handleFetchAllPrices() {
+		try {
+			loading = true;
+			await api.fetchAllCurrentPrices();
+			await loadData();
+		} catch (err) {
+			error = err.message;
+		}
+	}
+
+	function handleCancel() {
+		showForm = false;
+		editingPosition = null;
+	}
+
+	function openNewPositionForm() {
+		editingPosition = null;
+		showForm = true;
+	}
+
+	$effect(() => {
+		// Filter positions based on current filters
+		filteredPositions;
+	});
+
+	let filteredPositions = $derived(() => {
+		let filtered = positions;
+
+		if (filterStock) {
+			filtered = filtered.filter(p =>
+				p.stock.toLowerCase().includes(filterStock.toLowerCase())
+			);
+		}
+
+		if (filterType) {
+			filtered = filtered.filter(p => p.type === filterType);
+		}
+
+		if (filterStatus === 'open') {
+			filtered = filtered.filter(p => p.is_open);
+		} else if (filterStatus === 'closed') {
+			filtered = filtered.filter(p => !p.is_open);
+		}
+
+		return filtered;
+	});
+</script>
+
+<div class="min-h-screen bg-gray-50">
+	<header class="bg-white shadow">
+		<div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+			<div class="flex justify-between items-center">
+				<h1 class="text-3xl font-bold text-gray-900">Wheel Strategy Tracker</h1>
+				<button
+					onclick={openNewPositionForm}
+					class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
+				>
+					+ New Position
+				</button>
+			</div>
+		</div>
+	</header>
+
+	<main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+		{#if error}
+			<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6">
+				<p class="font-bold">Error loading data:</p>
+				<p>{error}</p>
+				<p class="text-sm mt-2">Make sure Django server is running: <code class="bg-red-100 px-1 py-0.5 rounded">python manage.py runserver</code></p>
+				<p class="text-sm mt-1">Then refresh this page.</p>
+			</div>
+		{/if}
+
+		{#if loading && !positions.length}
+			<div class="flex justify-center items-center py-12">
+				<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+			</div>
+		{:else}
+			{#if summary}
+				<Summary {summary} onFetchAllPrices={handleFetchAllPrices} />
+			{/if}
+
+			<div class="bg-white rounded-lg shadow p-6 mb-6">
+				<h2 class="text-xl font-bold text-gray-900 mb-4">Filters</h2>
+				<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+					<div>
+						<label for="filter-stock" class="block text-sm font-medium text-gray-700 mb-1">Stock Symbol</label>
+						<input
+							id="filter-stock"
+							type="text"
+							bind:value={filterStock}
+							placeholder="Filter by stock..."
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						/>
+					</div>
+					<div>
+						<label for="filter-type" class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+						<select
+							id="filter-type"
+							bind:value={filterType}
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						>
+							<option value="">All</option>
+							<option value="P">Put</option>
+							<option value="C">Call</option>
+						</select>
+					</div>
+					<div>
+						<label for="filter-status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+						<select
+							id="filter-status"
+							bind:value={filterStatus}
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						>
+							<option value="all">All</option>
+							<option value="open">Open</option>
+							<option value="closed">Closed</option>
+						</select>
+					</div>
+				</div>
+			</div>
+
+			{#if showForm}
+				<div class="bg-white rounded-lg shadow p-6 mb-6">
+					<h2 class="text-xl font-bold text-gray-900 mb-4">
+						{editingPosition ? 'Edit Position' : 'New Position'}
+					</h2>
+					<PositionForm
+						position={editingPosition}
+						onSave={handleSave}
+						onCancel={handleCancel}
+					/>
+				</div>
+			{/if}
+
+			<PositionTable
+				positions={filteredPositions()}
+				onEdit={handleEdit}
+				onDelete={handleDelete}
+				onFetchPrice={handleFetchPrice}
+			/>
+		{/if}
+	</main>
+</div>
+
+<style>
+	:global(body) {
+		margin: 0;
+		padding: 0;
+	}
+</style>

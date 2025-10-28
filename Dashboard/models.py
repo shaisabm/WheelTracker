@@ -1,3 +1,300 @@
 from django.db import models
+from django.core.validators import MinValueValidator
+from decimal import Decimal
+from datetime import datetime
 
-# Create your models here.
+
+class Position(models.Model):
+    """Model for tracking wheel strategy option positions"""
+
+    TYPE_CHOICES = [
+        ('P', 'Put'),
+        ('C', 'Call'),
+    ]
+
+    ASSIGNED_CHOICES = [
+        ('Yes', 'Yes'),
+        ('No', 'No'),
+    ]
+
+    # User input fields
+    open_date = models.DateField(help_text="The date that you open the contract")
+    stock = models.CharField(max_length=10, help_text="The ticker of the contract's underlying position")
+    related_to = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='related_positions',
+        help_text="Link to previous position in the wheel cycle (e.g., link a covered call to the put that got assigned)"
+    )
+    wheel_cycle_name = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Optional name for this wheel cycle (e.g., 'AAPL Jan 2025', 'TSLA Wheel #1')"
+    )
+    expiration = models.DateField(help_text="The expiration date of the contract")
+    type = models.CharField(max_length=1, choices=TYPE_CHOICES, help_text="P for Put or C for Call")
+    num_contracts = models.IntegerField(
+        validators=[MinValueValidator(1)],
+        help_text="The number of contracts"
+    )
+    strike = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))],
+        help_text="The strike price for the contract"
+    )
+    premium = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.00'))],
+        help_text="The amount of premium received for selling your call or put"
+    )
+    open_fees = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0.00'))],
+        help_text="Commissions and fees paid to open a trade (total for all contracts)"
+    )
+    close_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="The date you close a position (or expiration date if held through expiration)"
+    )
+    assigned = models.CharField(
+        max_length=3,
+        choices=ASSIGNED_CHOICES,
+        default='No',
+        help_text="Enter Yes if assigned shares or had shares called away, otherwise No"
+    )
+    premium_paid_to_close = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal('0.00'))],
+        help_text="The amount paid to close the position (0 if held through expiration)"
+    )
+    close_fees = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0.00'))],
+        help_text="Commissions and fees paid to close a trade"
+    )
+    notes = models.TextField(
+        blank=True,
+        help_text="Any notes or comments about the contract"
+    )
+
+    # Calculated/fetched fields
+    current_option_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="The mid price the option is currently trading for (from Yahoo Finance)"
+    )
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-open_date', 'stock']
+        indexes = [
+            models.Index(fields=['stock']),
+            models.Index(fields=['open_date']),
+            models.Index(fields=['expiration']),
+            models.Index(fields=['wheel_cycle_name']),
+        ]
+
+    def __str__(self):
+        cycle_info = f" ({self.wheel_cycle_name})" if self.wheel_cycle_name else ""
+        return f"{self.stock}{cycle_info} - {self.get_type_display()} ${self.strike} exp {self.expiration}"
+
+    def get_wheel_cycle_positions(self):
+        """Get all positions in this wheel cycle (following the chain)"""
+        positions = [self]
+
+        # Follow the chain backwards
+        current = self.related_to
+        while current:
+            positions.insert(0, current)
+            current = current.related_to
+
+        # Follow the chain forwards
+        for related in self.related_positions.all():
+            positions.extend(related.get_wheel_cycle_positions()[1:])  # Skip the current position
+
+        return positions
+
+    @property
+    def wheel_cycle_number(self):
+        """Calculate which position this is in the wheel cycle (1, 2, 3, etc.)"""
+        cycle_positions = self.get_wheel_cycle_positions()
+        try:
+            return cycle_positions.index(self) + 1
+        except ValueError:
+            return 1
+
+    @property
+    def is_wheel_complete(self):
+        """Check if this wheel cycle is complete (had assignment and shares called away)"""
+        cycle_positions = self.get_wheel_cycle_positions()
+        has_put_assignment = any(p.type == 'P' and p.assigned == 'Yes' for p in cycle_positions)
+        has_call_assignment = any(p.type == 'C' and p.assigned == 'Yes' for p in cycle_positions)
+        return has_put_assignment and has_call_assignment
+
+    @property
+    def is_open(self):
+        """Check if the position is still open"""
+        return self.close_date is None
+
+    @property
+    def days_in_trade(self):
+        """Calculate the number of days the trade was held"""
+        if self.close_date:
+            return (self.close_date - self.open_date).days
+        return (datetime.now().date() - self.open_date).days
+
+    @property
+    def days_to_expiration(self):
+        """Calculate the number of days remaining until expiration"""
+        if self.close_date:
+            return 0
+        days = (self.expiration - datetime.now().date()).days
+        return max(0, days)
+
+    @property
+    def days_open_to_expiration(self):
+        """Calculate total days from open to expiration"""
+        return (self.expiration - self.open_date).days
+
+    @property
+    def profit_loss(self):
+        """Calculate P/L: ((Premium received - Price paid to close) x # contracts) - total fees"""
+        if self.close_date is None:
+            return None
+
+        premium_paid = self.premium_paid_to_close or Decimal('0.00')
+        close_fees_val = self.close_fees or Decimal('0.00')
+
+        gross_profit = (self.premium - premium_paid) * self.num_contracts * 100
+        total_fees = self.open_fees + close_fees_val
+
+        return gross_profit - total_fees
+
+    @property
+    def collateral_requirement(self):
+        """Calculate the collateral requirement for the position"""
+        # For cash-secured puts: strike * 100 * num_contracts
+        # For covered calls: This would be based on cost basis, but we'll use strike as approximation
+        return self.strike * 100 * self.num_contracts
+
+    @property
+    def risk_less_premium(self):
+        """Calculate risk less premium collected on open"""
+        premium_collected = (self.premium * self.num_contracts * 100) - self.open_fees
+        return self.collateral_requirement - premium_collected
+
+    @property
+    def ar_if_held_to_expiration(self):
+        """Calculate Annualized Rate of Return if held to expiration"""
+        if self.days_open_to_expiration == 0:
+            return None
+
+        premium_less_fees = (self.premium * self.num_contracts * 100) - self.open_fees
+        risk = self.risk_less_premium
+
+        if risk <= 0:
+            return None
+
+        return (Decimal('365') * premium_less_fees / risk / self.days_open_to_expiration) * 100
+
+    @property
+    def ar_of_closed_trade(self):
+        """Calculate actual Annualized Rate of Return for closed trades"""
+        if self.close_date is None or self.days_in_trade == 0:
+            return None
+
+        pl = self.profit_loss
+        if pl is None:
+            return None
+
+        risk = self.risk_less_premium
+        if risk <= 0:
+            return None
+
+        return (Decimal('365') * pl / risk / self.days_in_trade) * 100
+
+    @property
+    def ar_on_realized_premium(self):
+        """Calculate AR on realized premium for open positions"""
+        if self.close_date is not None or self.days_in_trade == 0:
+            return None
+
+        if self.current_option_price is None:
+            return None
+
+        # Realized P/L if closed at current price
+        premium_paid = self.current_option_price
+        close_fees_estimated = self.open_fees  # Estimate close fees same as open fees
+        gross_profit = (self.premium - premium_paid) * self.num_contracts * 100
+        realized_pl = gross_profit - self.open_fees - close_fees_estimated
+
+        risk = self.risk_less_premium
+        if risk <= 0:
+            return None
+
+        return (Decimal('365') * realized_pl / risk / self.days_in_trade) * 100
+
+    @property
+    def ar_on_remaining_premium(self):
+        """Calculate AR on remaining premium for open positions"""
+        if self.close_date is not None or self.days_to_expiration == 0:
+            return None
+
+        if self.current_option_price is None:
+            return None
+
+        # Cost to close
+        cost_to_close = self.current_option_price * self.num_contracts * 100
+
+        risk = self.risk_less_premium
+        if risk <= 0:
+            return None
+
+        return (Decimal('365') * cost_to_close / risk / self.days_to_expiration) * 100
+
+    @property
+    def percent_premium_earned(self):
+        """Calculate % of premium earned at current option price"""
+        if self.current_option_price is None:
+            return None
+
+        if self.premium == 0:
+            return None
+
+        premium_earned = self.premium - self.current_option_price
+        return (premium_earned / self.premium) * 100
+
+    @property
+    def set_break_even_price_puts(self):
+        """Calculate break-even price for puts in a set (basic calculation)"""
+        if self.type != 'P':
+            return None
+
+        # Get all puts in this set for this stock
+        # This is a simplified calculation - actual implementation would need to sum across all positions in set
+        total_premium_loss = Decimal('0.00')
+
+        if self.close_date and self.premium_paid_to_close:
+            if self.premium_paid_to_close > self.premium:
+                total_premium_loss = self.premium_paid_to_close - self.premium
+
+        return self.strike - total_premium_loss

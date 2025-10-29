@@ -204,21 +204,25 @@ class Position(models.Model):
 
     @property
     def ar_if_held_to_expiration(self):
-        """Calculate Annualized Rate of Return if held to expiration"""
+        """Calculate Annualized Rate of Return if held to expiration
+        Formula: (365 / days_open_to_expiration) * (premium / collateral) * 100
+        """
         if self.days_open_to_expiration == 0:
             return None
 
-        premium_less_fees = (self.premium * self.num_contracts * 100) - self.open_fees
-        risk = self.risk_less_premium
+        premium_dollars = self.premium * self.num_contracts * 100
+        collateral = self.collateral_requirement
 
-        if risk <= 0:
+        if collateral <= 0:
             return None
 
-        return (Decimal('365') * premium_less_fees / risk / self.days_open_to_expiration) * 100
+        return (Decimal('365') / self.days_open_to_expiration) * (premium_dollars / collateral) * 100
 
     @property
     def ar_of_closed_trade(self):
-        """Calculate actual Annualized Rate of Return for closed trades"""
+        """Calculate actual Annualized Rate of Return for closed trades
+        Formula: (365 / days_in_trade) * (profit_loss / collateral) * 100
+        """
         if self.close_date is None or self.days_in_trade == 0:
             return None
 
@@ -226,11 +230,11 @@ class Position(models.Model):
         if pl is None:
             return None
 
-        risk = self.risk_less_premium
-        if risk <= 0:
+        collateral = self.collateral_requirement
+        if collateral <= 0:
             return None
 
-        return (Decimal('365') * pl / risk / self.days_in_trade) * 100
+        return (Decimal('365') / self.days_in_trade) * (pl / collateral) * 100
 
     @property
     def ar_on_realized_premium(self):

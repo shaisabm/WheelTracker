@@ -253,10 +253,11 @@ class PositionViewSet(viewsets.ModelViewSet):
         position_count = 0
 
         for pos in positions:
-            premium_dollars = pos.premium * pos.num_contracts * 100
+            # Use profit_loss which accounts for premium collected, premium paid to close, and all fees
+            profit = pos.profit_loss
             collateral = pos.collateral_requirement
 
-            total_premium += premium_dollars
+            total_premium += profit
             total_collateral += collateral
             position_count += 1
 

@@ -82,6 +82,10 @@
 	function openNewPositionForm() {
 		editingPosition = null;
 		showForm = true;
+		// Scroll to form after it's rendered
+		setTimeout(() => {
+			document.getElementById('position-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		}, 100);
 	}
 
 	$effect(() => {
@@ -120,7 +124,7 @@
 <div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
 	<!-- Professional Header with Gradient -->
 	<header class="bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg">
-		<div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+		<div class="mx-auto px-4 py-4 sm:px-6 lg:px-8">
 			<div class="flex justify-between items-center">
 				<!-- Logo and Brand Name -->
 				<div class="flex items-center gap-3">
@@ -147,7 +151,7 @@
 		</div>
 	</header>
 
-	<main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+	<main class="mx-auto px-4 py-8 sm:px-6 lg:px-8">
 		{#if error}
 			<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6">
 				<p class="font-bold">Error loading data:</p>
@@ -209,7 +213,7 @@
 			</div>
 
 			{#if showForm}
-				<div class="bg-white rounded-lg shadow p-6 mb-6">
+				<div id="position-form" class="bg-white rounded-lg shadow p-6 mb-6">
 					<h2 class="text-xl font-bold text-gray-900 mb-4">
 						{editingPosition ? 'Edit Position' : 'New Position'}
 					</h2>

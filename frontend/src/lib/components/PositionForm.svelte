@@ -74,7 +74,7 @@
 				stock: formData.stock.toUpperCase(),
 				// Convert empty strings to null for optional fields
 				close_date: formData.close_date || null,
-				premium_paid_to_close: formData.premium_paid_to_close || null,
+				premium_paid_to_close: formData.premium_paid_to_close === '' ? null : formData.premium_paid_to_close,
 			};
 			onSave(data);
 		}

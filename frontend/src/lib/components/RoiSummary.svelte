@@ -194,7 +194,7 @@
 				</div>
 
 				<div class="bg-blue-50 rounded-lg p-4">
-					<div class="text-sm font-medium text-blue-600 mb-1">Total Premium</div>
+					<div class="text-sm font-medium text-blue-600 mb-1">Total NexP/L</div>
 					<div class="text-2xl font-bold text-blue-900">{formatCurrency(roiData.premium)}</div>
 				</div>
 

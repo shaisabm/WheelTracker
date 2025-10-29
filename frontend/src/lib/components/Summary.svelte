@@ -1,5 +1,5 @@
 <script>
-	let { summary, onFetchAllPrices } = $props();
+	let { summary } = $props();
 
 	function formatCurrency(value) {
 		if (value === null || value === undefined) return '-';
@@ -19,14 +19,8 @@
 </script>
 
 <div class="bg-white rounded-lg shadow mb-6">
-	<div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+	<div class="px-6 py-4 border-b border-gray-200">
 		<h2 class="text-xl font-bold text-gray-900">Portfolio Summary</h2>
-		<button
-			onclick={onFetchAllPrices}
-			class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
-		>
-			Refresh All Prices
-		</button>
 	</div>
 	<div class="p-6">
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

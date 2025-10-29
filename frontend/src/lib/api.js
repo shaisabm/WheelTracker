@@ -25,6 +25,14 @@ async function fetchWithTimeout(url, options = {}, timeout = 5000) {
 async function handleResponse(response) {
     if (!response.ok) {
         const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('API Error Response:', error);
+        // If error is an object with field-specific errors, format them nicely
+        if (typeof error === 'object' && !error.error) {
+            const errorMessages = Object.entries(error)
+                .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+                .join('\n');
+            throw new Error(errorMessages || `HTTP error! status: ${response.status}`);
+        }
         throw new Error(error.error || `HTTP error! status: ${response.status}`);
     }
     return response.json();

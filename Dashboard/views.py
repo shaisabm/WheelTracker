@@ -16,10 +16,18 @@ class PositionViewSet(viewsets.ModelViewSet):
     """
     queryset = Position.objects.all()
     serializer_class = PositionSerializer
-    filterset_fields = ['stock', 'type', 'set_number', 'assigned']
+    filterset_fields = ['stock', 'type', 'assigned']
     search_fields = ['stock', 'notes']
     ordering_fields = ['open_date', 'expiration', 'stock', 'profit_loss']
     ordering = ['-open_date']
+
+    def create(self, request, *args, **kwargs):
+        """Override create to provide better error logging"""
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            print(f"Validation errors: {serializer.errors}")
+            print(f"Request data: {request.data}")
+        return super().create(request, *args, **kwargs)
 
     @action(detail=True, methods=['post'])
     def fetch_current_price(self, request, pk=None):
@@ -154,11 +162,10 @@ class PositionViewSet(viewsets.ModelViewSet):
             if pos.profit_loss:
                 total_pl += pos.profit_loss
 
-        # Calculate total premium collected
-        total_premium = positions.aggregate(
-            total=Sum('premium')
-        )['total'] or Decimal('0.00')
-        total_premium_dollars = total_premium * 100  # Convert to dollars
+        # Calculate total premium collected (premium per contract × num contracts × 100)
+        total_premium_dollars = Decimal('0.00')
+        for pos in positions:
+            total_premium_dollars += pos.premium * pos.num_contracts * 100
 
         # Calculate total collateral at risk for open positions
         open_pos = positions.filter(close_date__isnull=True)

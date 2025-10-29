@@ -71,24 +71,6 @@
 		}
 	}
 
-	async function handleFetchPrice(id) {
-		try {
-			await api.fetchCurrentPrice(id);
-			await loadData();
-		} catch (err) {
-			error = err.message;
-		}
-	}
-
-	async function handleFetchAllPrices() {
-		try {
-			loading = true;
-			await api.fetchAllCurrentPrices();
-			await loadData();
-		} catch (err) {
-			error = err.message;
-		}
-	}
 
 	function handleCancel() {
 		showForm = false;
@@ -159,7 +141,7 @@
 			</div>
 		{:else}
 			{#if summary}
-				<Summary {summary} onFetchAllPrices={handleFetchAllPrices} />
+				<Summary {summary} />
 			{/if}
 
 			<div class="bg-white rounded-lg shadow p-6 mb-6">
@@ -209,6 +191,7 @@
 					</h2>
 					<PositionForm
 						position={editingPosition}
+						availablePositions={positions}
 						onSave={handleSave}
 						onCancel={handleCancel}
 					/>
@@ -219,7 +202,6 @@
 				positions={filteredPositions()}
 				onEdit={handleEdit}
 				onDelete={handleDelete}
-				onFetchPrice={handleFetchPrice}
 			/>
 		{/if}
 	</main>

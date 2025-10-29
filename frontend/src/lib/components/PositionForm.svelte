@@ -1,11 +1,12 @@
 <script>
-	let { position = null, onSave, onCancel } = $props();
+	let { position = null, onSave, onCancel, availablePositions = [] } = $props();
 
 	// Initialize form data
 	let formData = $state({
 		open_date: position?.open_date || '',
 		stock: position?.stock || '',
-		set_number: position?.set_number || 1,
+		related_to: position?.related_to || null,
+		wheel_cycle_name: position?.wheel_cycle_name || '',
 		expiration: position?.expiration || '',
 		type: position?.type || 'P',
 		num_contracts: position?.num_contracts || 1,
@@ -17,6 +18,22 @@
 		premium_paid_to_close: position?.premium_paid_to_close || '',
 		close_fees: position?.close_fees || '0.00',
 		notes: position?.notes || '',
+	});
+
+	// Track if this is a continuation of an existing wheel
+	let isNewWheel = $derived(!formData.related_to);
+
+	// When a related position is selected, auto-fill stock and wheel cycle name
+	$effect(() => {
+		if (formData.related_to) {
+			const relatedPos = availablePositions.find(p => p.id === formData.related_to);
+			if (relatedPos) {
+				formData.stock = relatedPos.stock;
+				if (relatedPos.wheel_cycle_name) {
+					formData.wheel_cycle_name = relatedPos.wheel_cycle_name;
+				}
+			}
+		}
 	});
 
 	let errors = $state({});
@@ -65,6 +82,53 @@
 </script>
 
 <form onsubmit={handleSubmit} class="space-y-6">
+	<!-- Wheel Cycle Section -->
+	<div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+		<h3 class="text-sm font-semibold text-blue-900 mb-3">Wheel Cycle Tracking</h3>
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+			<!-- Related To - First field -->
+			<div>
+				<label for="related-to" class="block text-sm font-medium text-gray-700 mb-1">
+					Continue Existing Wheel?
+				</label>
+				<select
+					id="related-to"
+					bind:value={formData.related_to}
+					class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+				>
+					<option value={null}>No - Start new wheel cycle</option>
+					{#each availablePositions as pos}
+						<option value={pos.id}>
+							{pos.stock} - {pos.type === 'P' ? 'Put' : 'Call'} ${pos.strike} (opened {pos.open_date})
+						</option>
+					{/each}
+				</select>
+				<p class="text-xs text-gray-600 mt-1">
+					{isNewWheel ? 'Starting a new wheel cycle' : 'Continuing an existing wheel cycle'}
+				</p>
+			</div>
+
+			<!-- Wheel Cycle Name -->
+			<div>
+				<label for="wheel-cycle-name" class="block text-sm font-medium text-gray-700 mb-1">
+					Wheel Cycle Name (Optional)
+				</label>
+				<input
+					id="wheel-cycle-name"
+					type="text"
+					bind:value={formData.wheel_cycle_name}
+					placeholder="e.g., AAPL Jan 2025"
+					class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					disabled={!isNewWheel && !formData.wheel_cycle_name}
+				/>
+				<p class="text-xs text-gray-600 mt-1">
+					{isNewWheel ? 'Give this wheel cycle a name' : 'Inherited from related position'}
+				</p>
+			</div>
+		</div>
+	</div>
+
+	<!-- Position Details Section -->
 	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 		<!-- Open Date -->
 		<div>
@@ -83,37 +147,40 @@
 			{/if}
 		</div>
 
-		<!-- Stock -->
-		<div>
-			<label for="stock" class="block text-sm font-medium text-gray-700 mb-1">
-				Stock Ticker <span class="text-red-500">*</span>
-			</label>
-			<input
-				id="stock"
-				type="text"
-				bind:value={formData.stock}
-				placeholder="e.g., AAPL"
-				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
-				class:border-red-500={errors.stock}
-			/>
-			{#if errors.stock}
-				<p class="text-red-500 text-xs mt-1">{errors.stock}</p>
-			{/if}
-		</div>
-
-		<!-- Set Number -->
-		<div>
-			<label for="set-number" class="block text-sm font-medium text-gray-700 mb-1">
-				Set Number
-			</label>
-			<input
-				id="set-number"
-				type="number"
-				bind:value={formData.set_number}
-				min="1"
-				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-			/>
-		</div>
+		<!-- Stock - Only show if new wheel -->
+		{#if isNewWheel}
+			<div>
+				<label for="stock" class="block text-sm font-medium text-gray-700 mb-1">
+					Stock Ticker <span class="text-red-500">*</span>
+				</label>
+				<input
+					id="stock"
+					type="text"
+					bind:value={formData.stock}
+					placeholder="e.g., AAPL"
+					class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+					class:border-red-500={errors.stock}
+				/>
+				{#if errors.stock}
+					<p class="text-red-500 text-xs mt-1">{errors.stock}</p>
+				{/if}
+			</div>
+		{:else}
+			<!-- Show stock as read-only when continuing a wheel -->
+			<div>
+				<label for="stock-display" class="block text-sm font-medium text-gray-700 mb-1">
+					Stock Ticker
+				</label>
+				<input
+					id="stock-display"
+					type="text"
+					value={formData.stock}
+					disabled
+					class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed"
+				/>
+				<p class="text-xs text-gray-500 mt-1">Inherited from related position</p>
+			</div>
+		{/if}
 
 		<!-- Expiration -->
 		<div>
@@ -174,7 +241,7 @@
 				id="strike"
 				type="number"
 				bind:value={formData.strike}
-				step="0.01"
+				step="0.001"
 				min="0.01"
 				placeholder="0.00"
 				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -194,7 +261,7 @@
 				id="premium"
 				type="number"
 				bind:value={formData.premium}
-				step="0.01"
+				step="0.001"
 				min="0"
 				placeholder="0.00"
 				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -214,7 +281,7 @@
 				id="open-fees"
 				type="number"
 				bind:value={formData.open_fees}
-				step="0.01"
+				step="0.001"
 				min="0"
 				placeholder="0.00"
 				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -262,7 +329,7 @@
 				id="premium-paid"
 				type="number"
 				bind:value={formData.premium_paid_to_close}
-				step="0.01"
+				step="0.001"
 				min="0"
 				placeholder="0.00"
 				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -282,12 +349,13 @@
 				id="close-fees"
 				type="number"
 				bind:value={formData.close_fees}
-				step="0.01"
+				step="0.001"
 				min="0"
 				placeholder="0.00"
 				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 			/>
 		</div>
+
 	</div>
 
 	<!-- Notes -->

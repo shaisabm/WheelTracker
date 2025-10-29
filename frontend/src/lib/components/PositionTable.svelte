@@ -1,5 +1,5 @@
 <script>
-	let { positions = [], onEdit, onDelete, onFetchPrice } = $props();
+	let { positions = [], onEdit, onDelete } = $props();
 
 	function formatCurrency(value) {
 		if (value === null || value === undefined) return '-';
@@ -19,7 +19,11 @@
 
 	function formatDate(dateString) {
 		if (!dateString) return '-';
-		return new Date(dateString).toLocaleDateString('en-US');
+		// Parse as local date to avoid timezone conversion issues
+		// Date string format: "YYYY-MM-DD"
+		const [year, month, day] = dateString.split('-');
+		const date = new Date(year, month - 1, day);
+		return date.toLocaleDateString('en-US');
 	}
 
 	function getStatusBadge(position) {
@@ -56,7 +60,7 @@
 				<thead class="bg-gray-50">
 					<tr>
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Set</th>
+						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Wheel Cycle</th>
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Strike</th>
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contracts</th>
@@ -66,7 +70,6 @@
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DTE</th>
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">P/L</th>
-						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Price</th>
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AR%</th>
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
 					</tr>
@@ -80,7 +83,15 @@
 								<div class="text-sm font-medium text-gray-900">{position.stock}</div>
 							</td>
 							<td class="px-4 py-3 whitespace-nowrap">
-								<div class="text-sm text-gray-900">{position.set_number}</div>
+								<div class="text-sm text-gray-900">
+									{#if position.wheel_cycle_name}
+										{position.wheel_cycle_name}
+									{:else if position.wheel_cycle_number > 1}
+										Step {position.wheel_cycle_number}
+									{:else}
+										-
+									{/if}
+								</div>
 							</td>
 							<td class="px-4 py-3 whitespace-nowrap">
 								<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {typeBadge.class}">
@@ -122,24 +133,6 @@
 								</div>
 							</td>
 							<td class="px-4 py-3 whitespace-nowrap">
-								<div class="flex items-center gap-2">
-									<div class="text-sm text-gray-900">
-										{position.current_option_price ? `$${position.current_option_price}` : '-'}
-									</div>
-									{#if position.is_open}
-										<button
-											onclick={() => onFetchPrice(position.id)}
-											class="text-blue-600 hover:text-blue-800"
-											title="Refresh price"
-										>
-											<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-											</svg>
-										</button>
-									{/if}
-								</div>
-							</td>
-							<td class="px-4 py-3 whitespace-nowrap">
 								<div class="text-sm text-gray-900">
 									{#if position.is_open}
 										{formatPercent(position.ar_if_held_to_expiration)}
@@ -173,9 +166,9 @@
 						</tr>
 
 						<!-- Expandable row for additional details -->
-						{#if position.notes || position.assigned === 'Yes' || position.percent_premium_earned !== null}
+						{#if position.notes || position.assigned === 'Yes'}
 							<tr class="bg-gray-50">
-								<td colspan="14" class="px-4 py-3">
+								<td colspan="13" class="px-4 py-3">
 									<div class="text-sm text-gray-700">
 										<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 											{#if position.notes}

@@ -12,7 +12,7 @@ class PositionSerializer(serializers.ModelSerializer):
 
     # Calculated read-only fields
     profit_loss = serializers.DecimalField(
-        max_digits=10, decimal_places=2, read_only=True
+        max_digits=10, decimal_places=3, read_only=True
     )
     ar_if_held_to_expiration = serializers.DecimalField(
         max_digits=10, decimal_places=2, read_only=True, allow_null=True
@@ -30,14 +30,14 @@ class PositionSerializer(serializers.ModelSerializer):
         max_digits=10, decimal_places=2, read_only=True, allow_null=True
     )
     set_break_even_price_puts = serializers.DecimalField(
-        max_digits=10, decimal_places=2, read_only=True, allow_null=True
+        max_digits=10, decimal_places=3, read_only=True, allow_null=True
     )
     is_open = serializers.BooleanField(read_only=True)
     days_in_trade = serializers.IntegerField(read_only=True)
     days_to_expiration = serializers.IntegerField(read_only=True)
     days_open_to_expiration = serializers.IntegerField(read_only=True)
     collateral_requirement = serializers.DecimalField(
-        max_digits=10, decimal_places=2, read_only=True
+        max_digits=10, decimal_places=3, read_only=True
     )
 
     class Meta:
@@ -46,7 +46,10 @@ class PositionSerializer(serializers.ModelSerializer):
             'id',
             'open_date',
             'stock',
-            'set_number',
+            'related_to',
+            'wheel_cycle_name',
+            'wheel_cycle_number',
+            'is_wheel_complete',
             'expiration',
             'type',
             'num_contracts',
@@ -58,7 +61,6 @@ class PositionSerializer(serializers.ModelSerializer):
             'premium_paid_to_close',
             'close_fees',
             'notes',
-            'current_option_price',
             'created_at',
             'updated_at',
             # Calculated fields

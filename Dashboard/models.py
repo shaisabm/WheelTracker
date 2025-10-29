@@ -41,19 +41,19 @@ class Position(models.Model):
     )
     strike = models.DecimalField(
         max_digits=10,
-        decimal_places=2,
+        decimal_places=3,
         validators=[MinValueValidator(Decimal('0.01'))],
         help_text="The strike price for the contract"
     )
     premium = models.DecimalField(
         max_digits=10,
-        decimal_places=2,
+        decimal_places=3,
         validators=[MinValueValidator(Decimal('0.00'))],
         help_text="The amount of premium received for selling your call or put"
     )
     open_fees = models.DecimalField(
         max_digits=10,
-        decimal_places=2,
+        decimal_places=3,
         default=Decimal('0.00'),
         validators=[MinValueValidator(Decimal('0.00'))],
         help_text="Commissions and fees paid to open a trade (total for all contracts)"
@@ -71,7 +71,7 @@ class Position(models.Model):
     )
     premium_paid_to_close = models.DecimalField(
         max_digits=10,
-        decimal_places=2,
+        decimal_places=3,
         null=True,
         blank=True,
         validators=[MinValueValidator(Decimal('0.00'))],
@@ -79,7 +79,7 @@ class Position(models.Model):
     )
     close_fees = models.DecimalField(
         max_digits=10,
-        decimal_places=2,
+        decimal_places=3,
         null=True,
         blank=True,
         default=Decimal('0.00'),

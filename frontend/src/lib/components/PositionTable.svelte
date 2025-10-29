@@ -145,7 +145,7 @@
 								<div class="flex gap-2">
 									<button
 										onclick={() => onEdit(position)}
-										class="text-blue-600 hover:text-blue-900"
+										class="text-blue-600 hover:text-blue-900 cursor-pointer"
 										title="Edit"
 									>
 										<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,7 +154,7 @@
 									</button>
 									<button
 										onclick={() => onDelete(position.id)}
-										class="text-red-600 hover:text-red-900"
+										class="text-red-600 hover:text-red-900 cursor-pointer"
 										title="Delete"
 									>
 										<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

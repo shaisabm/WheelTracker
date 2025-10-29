@@ -1,7 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class Position(models.Model):
@@ -298,3 +298,20 @@ class Position(models.Model):
                 total_premium_loss = self.premium_paid_to_close - self.premium
 
         return self.strike - total_premium_loss
+
+    @property
+    def roi_percentage(self):
+        """
+        Calculate ROI percentage: (premium / collateral) * 100
+        This shows the return on investment for the position
+        """
+        collateral = self.collateral_requirement
+        if not collateral or collateral == 0:
+            return None
+
+        # Premium collected in dollars
+        premium_dollars = self.premium * self.num_contracts * 100
+
+        # ROI = (Premium / Collateral) * 100
+        roi = (premium_dollars / collateral) * 100
+        return roi

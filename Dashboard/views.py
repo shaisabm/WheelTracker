@@ -215,3 +215,61 @@ class PositionViewSet(viewsets.ModelViewSet):
         ).order_by('stock')
 
         return Response(stocks)
+
+    @action(detail=False, methods=['get'])
+    def roi_summary(self, request):
+        """
+        Get ROI summary for a date range
+        Only includes CLOSED positions (realized gains)
+        Query params: start_date, end_date (YYYY-MM-DD format, optional)
+        """
+        from datetime import datetime
+
+        # Get date range from query params
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+
+        # Start with closed positions only
+        positions = Position.objects.filter(close_date__isnull=False)
+
+        # Apply date filters if provided (using open_date)
+        if start_date:
+            try:
+                start = datetime.strptime(start_date, '%Y-%m-%d').date()
+                positions = positions.filter(open_date__gte=start)
+            except ValueError:
+                return Response({'error': 'Invalid start_date format. Use YYYY-MM-DD'}, status=400)
+
+        if end_date:
+            try:
+                end = datetime.strptime(end_date, '%Y-%m-%d').date()
+                positions = positions.filter(open_date__lte=end)
+            except ValueError:
+                return Response({'error': 'Invalid end_date format. Use YYYY-MM-DD'}, status=400)
+
+        # Calculate totals
+        total_premium = Decimal('0.00')
+        total_collateral = Decimal('0.00')
+        position_count = 0
+
+        for pos in positions:
+            premium_dollars = pos.premium * pos.num_contracts * 100
+            collateral = pos.collateral_requirement
+
+            total_premium += premium_dollars
+            total_collateral += collateral
+            position_count += 1
+
+        # Calculate ROI
+        roi_percentage = None
+        if total_collateral > 0:
+            roi_percentage = (total_premium / total_collateral * 100)
+
+        return Response({
+            'premium': total_premium,
+            'collateral': total_collateral,
+            'roi_percentage': roi_percentage,
+            'position_count': position_count,
+            'start_date': start_date,
+            'end_date': end_date
+        })

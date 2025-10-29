@@ -119,4 +119,24 @@ export const api = {
         });
         return handleResponse(response);
     },
+
+    async getRoiSummary(startDate = '', endDate = '') {
+        try {
+            let url = `${API_BASE_URL}/positions/roi_summary/`;
+            const params = new URLSearchParams();
+            if (startDate) params.append('start_date', startDate);
+            if (endDate) params.append('end_date', endDate);
+
+            const queryString = params.toString();
+            if (queryString) {
+                url += `?${queryString}`;
+            }
+
+            const response = await fetchWithTimeout(url);
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to fetch ROI summary:', error);
+            throw error;
+        }
+    },
 };

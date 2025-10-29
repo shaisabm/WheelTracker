@@ -94,7 +94,7 @@
 				<select
 					id="related-to"
 					bind:value={formData.related_to}
-					class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+					class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white cursor-pointer"
 				>
 					<option value={null}>No - Start new wheel cycle</option>
 					{#each availablePositions as pos}
@@ -118,7 +118,7 @@
 					type="text"
 					bind:value={formData.wheel_cycle_name}
 					placeholder="e.g., AAPL Jan 2025"
-					class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
 					disabled={!isNewWheel && !formData.wheel_cycle_name}
 				/>
 				<p class="text-xs text-gray-600 mt-1">
@@ -139,7 +139,7 @@
 				id="open-date"
 				type="date"
 				bind:value={formData.open_date}
-				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
 				class:border-red-500={errors.open_date}
 			/>
 			{#if errors.open_date}
@@ -191,7 +191,7 @@
 				id="expiration"
 				type="date"
 				bind:value={formData.expiration}
-				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
 				class:border-red-500={errors.expiration}
 			/>
 			{#if errors.expiration}
@@ -207,7 +207,7 @@
 			<select
 				id="type"
 				bind:value={formData.type}
-				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
 			>
 				<option value="P">Put</option>
 				<option value="C">Call</option>
@@ -224,7 +224,7 @@
 				type="number"
 				bind:value={formData.num_contracts}
 				min="1"
-				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
 				class:border-red-500={errors.num_contracts}
 			/>
 			{#if errors.num_contracts}
@@ -244,7 +244,7 @@
 				step="0.001"
 				min="0.01"
 				placeholder="0.00"
-				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
 				class:border-red-500={errors.strike}
 			/>
 			{#if errors.strike}
@@ -264,7 +264,7 @@
 				step="0.001"
 				min="0"
 				placeholder="0.00"
-				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
 				class:border-red-500={errors.premium}
 			/>
 			{#if errors.premium}
@@ -284,7 +284,7 @@
 				step="0.001"
 				min="0"
 				placeholder="0.00"
-				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
 			/>
 		</div>
 
@@ -297,7 +297,7 @@
 				id="close-date"
 				type="date"
 				bind:value={formData.close_date}
-				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
 				class:border-red-500={errors.close_date}
 			/>
 			{#if errors.close_date}
@@ -313,7 +313,7 @@
 			<select
 				id="assigned"
 				bind:value={formData.assigned}
-				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
 			>
 				<option value="Yes">Yes</option>
 				<option value="No">No</option>
@@ -332,7 +332,7 @@
 				step="0.001"
 				min="0"
 				placeholder="0.00"
-				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
 				class:border-red-500={errors.premium_paid_to_close}
 			/>
 			{#if errors.premium_paid_to_close}
@@ -352,7 +352,7 @@
 				step="0.001"
 				min="0"
 				placeholder="0.00"
-				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
 			/>
 		</div>
 
@@ -368,7 +368,7 @@
 			bind:value={formData.notes}
 			rows="3"
 			placeholder="Any notes about this position..."
-			class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+			class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
 		></textarea>
 	</div>
 
@@ -377,13 +377,13 @@
 		<button
 			type="button"
 			onclick={onCancel}
-			class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
+			class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium cursor-pointer"
 		>
 			Cancel
 		</button>
 		<button
 			type="submit"
-			class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
+			class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium cursor-pointer"
 		>
 			{position ? 'Update' : 'Create'} Position
 		</button>

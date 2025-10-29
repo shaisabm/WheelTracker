@@ -1,6 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
+	import { goto } from '$app/navigation';
 	import { api } from '$lib/api';
 	import PositionForm from '$lib/components/PositionForm.svelte';
 	import PositionTable from '$lib/components/PositionTable.svelte';
@@ -88,6 +89,14 @@
 		}, 100);
 	}
 
+	function handleLogout() {
+		if (browser) {
+			localStorage.removeItem('access_token');
+			localStorage.removeItem('refresh_token');
+			goto('/login');
+		}
+	}
+
 	$effect(() => {
 		// Filter positions based on current filters
 		filteredPositions;
@@ -137,16 +146,28 @@
 					</div>
 				</div>
 
-				<!-- Action Button -->
-				<button
-					onclick={openNewPositionForm}
-					class="bg-white text-blue-600 hover:bg-blue-50 px-6 py-2.5 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 cursor-pointer"
-				>
-					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-					</svg>
-					New Position
-				</button>
+				<!-- Action Buttons -->
+				<div class="flex items-center gap-3">
+					<button
+						onclick={openNewPositionForm}
+						class="bg-white text-blue-600 hover:bg-blue-50 px-6 py-2.5 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 cursor-pointer"
+					>
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+						</svg>
+						New Position
+					</button>
+					<button
+						onclick={handleLogout}
+						class="bg-blue-800 text-white hover:bg-blue-900 px-4 py-2.5 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 cursor-pointer"
+						title="Logout"
+					>
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+						</svg>
+						Logout
+					</button>
+				</div>
 			</div>
 		</div>
 	</header>

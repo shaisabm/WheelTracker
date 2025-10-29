@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 from decimal import Decimal
 from datetime import datetime, timedelta
@@ -16,6 +17,9 @@ class Position(models.Model):
         ('Yes', 'Yes'),
         ('No', 'No'),
     ]
+
+    # User association
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='positions', null=True, default=1)
 
     # User input fields
     open_date = models.DateField(help_text="The date that you open the contract")

@@ -14,12 +14,19 @@ class PositionViewSet(viewsets.ModelViewSet):
     ViewSet for managing wheel strategy positions.
     Provides CRUD operations plus custom actions for fetching option prices and summaries.
     """
-    queryset = Position.objects.all()
     serializer_class = PositionSerializer
     filterset_fields = ['stock', 'type', 'assigned']
     search_fields = ['stock', 'notes']
     ordering_fields = ['open_date', 'expiration', 'stock', 'profit_loss']
     ordering = ['-open_date']
+
+    def get_queryset(self):
+        """Filter positions by logged-in user"""
+        return Position.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        """Automatically assign the logged-in user to new positions"""
+        serializer.save(user=self.request.user)
 
     def create(self, request, *args, **kwargs):
         """Override create to provide better error logging"""
@@ -146,9 +153,9 @@ class PositionViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def summary(self, request):
         """
-        Get summary statistics for all positions
+        Get summary statistics for all positions for the logged-in user
         """
-        positions = Position.objects.all()
+        positions = Position.objects.filter(user=request.user)
 
         # Calculate metrics
         total_positions = positions.count()
@@ -229,8 +236,8 @@ class PositionViewSet(viewsets.ModelViewSet):
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
 
-        # Start with closed positions only
-        positions = Position.objects.filter(close_date__isnull=False)
+        # Start with closed positions only for the logged-in user
+        positions = Position.objects.filter(user=request.user, close_date__isnull=False)
 
         # Apply date filters if provided (using open_date)
         if start_date:

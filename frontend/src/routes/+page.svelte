@@ -131,40 +131,32 @@
 </svelte:head>
 
 <div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-	<!-- Professional Header with Gradient -->
-	<header class="bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg">
-		<div class="mx-auto px-4 py-4 sm:px-6 lg:px-8">
+	<!-- Clean and Simple Header -->
+	<header class="bg-white border-b border-gray-200 shadow-sm">
+		<div class="mx-auto px-4 py-3 sm:px-6 lg:px-8">
 			<div class="flex justify-between items-center">
-				<!-- Logo and Brand Name -->
-				<div class="flex items-center gap-3">
-					<div class="bg-white rounded-lg p-2 shadow-md">
-						<Logo size={40} />
-					</div>
-					<div>
-						<h1 class="text-2xl font-bold text-white">WheelTracker</h1>
-						<p class="text-blue-100 text-sm">Options Wheel Strategy Platform</p>
-					</div>
+				<!-- Logo and Brand -->
+				<div class="flex items-center gap-2">
+					<Logo size={32} />
+					<h1 class="text-xl font-bold text-gray-900">WheelTracker</h1>
 				</div>
 
-				<!-- Action Buttons -->
-				<div class="flex items-center gap-3">
+				<!-- Navigation Actions -->
+				<div class="flex items-center gap-2">
 					<button
 						onclick={openNewPositionForm}
-						class="bg-white text-blue-600 hover:bg-blue-50 px-6 py-2.5 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 cursor-pointer"
+						class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
 					>
-						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
 						</svg>
 						New Position
 					</button>
 					<button
 						onclick={handleLogout}
-						class="bg-blue-800 text-white hover:bg-blue-900 px-4 py-2.5 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 cursor-pointer"
+						class="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer"
 						title="Logout"
 					>
-						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-						</svg>
 						Logout
 					</button>
 				</div>

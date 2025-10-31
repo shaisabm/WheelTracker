@@ -6,7 +6,7 @@ from decimal import Decimal
 from .models import Position
 from .serializers import PositionSerializer, PositionSummarySerializer
 import yfinance as yf
-from datetime import datetime
+
 
 
 class PositionViewSet(viewsets.ModelViewSet):

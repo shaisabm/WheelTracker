@@ -102,7 +102,7 @@
 <div class="bg-white rounded-lg shadow-lg mb-6 border border-gray-100">
 	<div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-white">
 		<h2 class="text-xl font-bold text-gray-900">Return on Investment (ROI)</h2>
-		<p class="text-sm text-gray-600 mt-1">Premium / Collateral × 100 • Closed positions only (realized gains)</p>
+		<p class="text-sm text-gray-600 mt-1">Closed positions only (realized gains)</p>
 	</div>
 
 	<!-- Date Range Picker -->
@@ -194,7 +194,7 @@
 				</div>
 
 				<div class="bg-blue-50 rounded-lg p-4">
-					<div class="text-sm font-medium text-blue-600 mb-1">Total NexP/L</div>
+					<div class="text-sm font-medium text-blue-600 mb-1">Total P/L</div>
 					<div class="text-2xl font-bold text-blue-900">{formatCurrency(roiData.premium)}</div>
 				</div>
 

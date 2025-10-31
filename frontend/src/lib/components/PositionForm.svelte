@@ -1,6 +1,9 @@
 <script>
 	let { position = null, onSave, onCancel, availablePositions = [] } = $props();
 
+	// Track if we're in roll mode
+	let isRolling = $state(false);
+
 	// Initialize form data
 	let formData = $state({
 		open_date: position?.open_date || '',
@@ -18,6 +21,16 @@
 		premium_paid_to_close: position?.premium_paid_to_close || '',
 		close_fees: position?.close_fees || '0.00',
 		notes: position?.notes || '',
+	});
+
+	// Roll form data for the new position
+	let rollData = $state({
+		open_date: '',
+		expiration: '',
+		strike: '',
+		num_contracts: position?.num_contracts || 1,
+		premium: '',
+		open_fees: '0.00',
 	});
 
 	// Track if this is a continuation of an existing wheel
@@ -42,28 +55,71 @@
 
 	let errors = $state({});
 
+	function enableRoll() {
+		isRolling = true;
+		// Set today as default close date for rolling
+		const today = new Date().toISOString().split('T')[0];
+		formData.close_date = today;
+		rollData.open_date = today;
+	}
+
+	function cancelRoll() {
+		isRolling = false;
+		// Clear roll-related fields
+		formData.close_date = position?.close_date || '';
+		formData.premium_paid_to_close = position?.premium_paid_to_close || '';
+		formData.close_fees = position?.close_fees || '0.00';
+		rollData = {
+			open_date: '',
+			expiration: '',
+			strike: '',
+			num_contracts: position?.num_contracts || 1,
+			premium: '',
+			open_fees: '0.00',
+		};
+	}
+
 	function validate() {
 		errors = {};
 
-		if (!formData.open_date) errors.open_date = 'Required';
-		if (!formData.stock) errors.stock = 'Required';
-		if (!formData.expiration) errors.expiration = 'Required';
-		if (!formData.num_contracts || formData.num_contracts < 1) errors.num_contracts = 'Must be at least 1';
-		if (!formData.strike || formData.strike <= 0) errors.strike = 'Must be greater than 0';
-		if (!formData.premium && formData.premium !== 0) errors.premium = 'Required';
+		if (isRolling) {
+			// Validate closing fields when rolling
+			if (!formData.close_date) errors.close_date = 'Required when rolling';
+			if (!formData.premium_paid_to_close && formData.premium_paid_to_close !== 0) {
+				errors.premium_paid_to_close = 'Required when rolling';
+			}
+			if (!formData.close_fees && formData.close_fees !== 0) {
+				errors.close_fees = 'Required when rolling';
+			}
 
-		// Validate dates
-		if (formData.open_date && formData.expiration && formData.open_date > formData.expiration) {
-			errors.expiration = 'Must be after open date';
-		}
+			// Validate new roll position fields
+			if (!rollData.open_date) errors.roll_open_date = 'Required';
+			if (!rollData.expiration) errors.roll_expiration = 'Required';
+			if (!rollData.strike || rollData.strike <= 0) errors.roll_strike = 'Must be greater than 0';
+			if (!rollData.num_contracts || rollData.num_contracts < 1) errors.roll_num_contracts = 'Must be at least 1';
+			if (!rollData.premium && rollData.premium !== 0) errors.roll_premium = 'Required';
+		} else {
+			// Normal validation
+			if (!formData.open_date) errors.open_date = 'Required';
+			if (!formData.stock) errors.stock = 'Required';
+			if (!formData.expiration) errors.expiration = 'Required';
+			if (!formData.num_contracts || formData.num_contracts < 1) errors.num_contracts = 'Must be at least 1';
+			if (!formData.strike || formData.strike <= 0) errors.strike = 'Must be greater than 0';
+			if (!formData.premium && formData.premium !== 0) errors.premium = 'Required';
 
-		if (formData.close_date && formData.open_date && formData.close_date < formData.open_date) {
-			errors.close_date = 'Must be after open date';
-		}
+			// Validate dates
+			if (formData.open_date && formData.expiration && formData.open_date > formData.expiration) {
+				errors.expiration = 'Must be after open date';
+			}
 
-		// If close_date is provided, premium_paid_to_close is required
-		if (formData.close_date && !formData.premium_paid_to_close && formData.premium_paid_to_close !== 0) {
-			errors.premium_paid_to_close = 'Required when closing';
+			if (formData.close_date && formData.open_date && formData.close_date < formData.open_date) {
+				errors.close_date = 'Must be after open date';
+			}
+
+			// If close_date is provided, premium_paid_to_close is required
+			if (formData.close_date && !formData.premium_paid_to_close && formData.premium_paid_to_close !== 0) {
+				errors.premium_paid_to_close = 'Required when closing';
+			}
 		}
 
 		return Object.keys(errors).length === 0;
@@ -72,21 +128,270 @@
 	function handleSubmit(e) {
 		e.preventDefault();
 		if (validate()) {
-			// Convert stock to uppercase
-			const data = {
-				...formData,
-				stock: formData.stock.toUpperCase(),
-				// Convert empty strings to null for optional fields
-				close_date: formData.close_date || null,
-				premium_paid_to_close: formData.premium_paid_to_close === '' ? null : formData.premium_paid_to_close,
-			};
-			onSave(data);
+			if (isRolling) {
+				// Submit roll data
+				const rollSubmission = {
+					isRoll: true,
+					closePosition: {
+						...formData,
+						stock: formData.stock.toUpperCase(),
+						close_date: formData.close_date,
+						premium_paid_to_close: formData.premium_paid_to_close,
+						close_fees: formData.close_fees,
+					},
+					newPosition: {
+						open_date: rollData.open_date,
+						stock: formData.stock.toUpperCase(),
+						related_to: position.id,
+						wheel_cycle_name: `Rolled from ${formData.expiration}`,
+						expiration: rollData.expiration,
+						type: formData.type,
+						num_contracts: rollData.num_contracts,
+						strike: rollData.strike,
+						premium: rollData.premium,
+						open_fees: rollData.open_fees,
+						close_date: null,
+						assigned: 'No',
+						premium_paid_to_close: null,
+						close_fees: '0.00',
+						notes: '',
+					}
+				};
+				onSave(rollSubmission);
+			} else {
+				// Normal save
+				const data = {
+					...formData,
+					stock: formData.stock.toUpperCase(),
+					// Convert empty strings to null for optional fields
+					close_date: formData.close_date || null,
+					premium_paid_to_close: formData.premium_paid_to_close === '' ? null : formData.premium_paid_to_close,
+				};
+				onSave(data);
+			}
 		}
 	}
 </script>
 
 <form onsubmit={handleSubmit} class="space-y-6">
+	<!-- Roll Button (only show when editing and position is open) -->
+	{#if position && !position.close_date && !isRolling}
+		<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+			<div class="flex justify-between items-center">
+				<div>
+					<h3 class="text-sm font-semibold text-yellow-900">Roll this position?</h3>
+					<p class="text-xs text-yellow-700 mt-1">Close the current position and open a new one with updated terms</p>
+				</div>
+				<button
+					type="button"
+					onclick={enableRoll}
+					class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium cursor-pointer"
+				>
+					Enable Roll
+				</button>
+			</div>
+		</div>
+	{/if}
+
+	<!-- Roll Form (shown when rolling) -->
+	{#if isRolling}
+		<div class="bg-green-50 border border-green-200 rounded-lg p-4 space-y-4">
+			<div class="flex justify-between items-center mb-4">
+				<h3 class="text-lg font-semibold text-green-900">Rolling Position</h3>
+				<button
+					type="button"
+					onclick={cancelRoll}
+					class="text-sm text-green-700 hover:text-green-900 underline cursor-pointer"
+				>
+					Cancel Roll
+				</button>
+			</div>
+
+			<!-- Closing Position Section -->
+			<div class="border-b border-green-300 pb-4">
+				<h4 class="text-sm font-semibold text-green-900 mb-3">1. Close Current Position</h4>
+				<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+					<!-- Close Date -->
+					<div>
+						<label for="roll-close-date" class="block text-sm font-medium text-gray-700 mb-1">
+							Close Date <span class="text-red-500">*</span>
+						</label>
+						<input
+							id="roll-close-date"
+							type="date"
+							bind:value={formData.close_date}
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+							class:border-red-500={errors.close_date}
+						/>
+						{#if errors.close_date}
+							<p class="text-red-500 text-xs mt-1">{errors.close_date}</p>
+						{/if}
+					</div>
+
+					<!-- Premium Paid to Close -->
+					<div>
+						<label for="roll-premium-paid" class="block text-sm font-medium text-gray-700 mb-1">
+							Premium Paid to Close <span class="text-red-500">*</span>
+						</label>
+						<input
+							id="roll-premium-paid"
+							type="number"
+							bind:value={formData.premium_paid_to_close}
+							step="0.001"
+							min="0"
+							placeholder="0.00"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+							class:border-red-500={errors.premium_paid_to_close}
+						/>
+						{#if errors.premium_paid_to_close}
+							<p class="text-red-500 text-xs mt-1">{errors.premium_paid_to_close}</p>
+						{/if}
+					</div>
+
+					<!-- Close Fees -->
+					<div>
+						<label for="roll-close-fees" class="block text-sm font-medium text-gray-700 mb-1">
+							Close Fees <span class="text-red-500">*</span>
+						</label>
+						<input
+							id="roll-close-fees"
+							type="number"
+							bind:value={formData.close_fees}
+							step="0.001"
+							min="0"
+							placeholder="0.00"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+							class:border-red-500={errors.close_fees}
+						/>
+						{#if errors.close_fees}
+							<p class="text-red-500 text-xs mt-1">{errors.close_fees}</p>
+						{/if}
+					</div>
+				</div>
+			</div>
+
+			<!-- New Position Section -->
+			<div>
+				<h4 class="text-sm font-semibold text-green-900 mb-3">2. Open New Rolled Position</h4>
+				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+					<!-- Open Date -->
+					<div>
+						<label for="roll-open-date" class="block text-sm font-medium text-gray-700 mb-1">
+							Open Date <span class="text-red-500">*</span>
+						</label>
+						<input
+							id="roll-open-date"
+							type="date"
+							bind:value={rollData.open_date}
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+							class:border-red-500={errors.roll_open_date}
+						/>
+						{#if errors.roll_open_date}
+							<p class="text-red-500 text-xs mt-1">{errors.roll_open_date}</p>
+						{/if}
+					</div>
+
+					<!-- Expiration -->
+					<div>
+						<label for="roll-expiration" class="block text-sm font-medium text-gray-700 mb-1">
+							New Expiration <span class="text-red-500">*</span>
+						</label>
+						<input
+							id="roll-expiration"
+							type="date"
+							bind:value={rollData.expiration}
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+							class:border-red-500={errors.roll_expiration}
+						/>
+						{#if errors.roll_expiration}
+							<p class="text-red-500 text-xs mt-1">{errors.roll_expiration}</p>
+						{/if}
+					</div>
+
+					<!-- Strike -->
+					<div>
+						<label for="roll-strike" class="block text-sm font-medium text-gray-700 mb-1">
+							New Strike <span class="text-red-500">*</span>
+						</label>
+						<input
+							id="roll-strike"
+							type="number"
+							bind:value={rollData.strike}
+							step="0.001"
+							min="0.01"
+							placeholder="0.00"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+							class:border-red-500={errors.roll_strike}
+						/>
+						{#if errors.roll_strike}
+							<p class="text-red-500 text-xs mt-1">{errors.roll_strike}</p>
+						{/if}
+					</div>
+
+					<!-- Contracts -->
+					<div>
+						<label for="roll-contracts" class="block text-sm font-medium text-gray-700 mb-1">
+							# Contracts <span class="text-red-500">*</span>
+						</label>
+						<input
+							id="roll-contracts"
+							type="number"
+							bind:value={rollData.num_contracts}
+							min="1"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+							class:border-red-500={errors.roll_num_contracts}
+						/>
+						{#if errors.roll_num_contracts}
+							<p class="text-red-500 text-xs mt-1">{errors.roll_num_contracts}</p>
+						{/if}
+					</div>
+
+					<!-- Premium -->
+					<div>
+						<label for="roll-premium" class="block text-sm font-medium text-gray-700 mb-1">
+							Premium Received <span class="text-red-500">*</span>
+						</label>
+						<input
+							id="roll-premium"
+							type="number"
+							bind:value={rollData.premium}
+							step="0.001"
+							min="0"
+							placeholder="0.00"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+							class:border-red-500={errors.roll_premium}
+						/>
+						{#if errors.roll_premium}
+							<p class="text-red-500 text-xs mt-1">{errors.roll_premium}</p>
+						{/if}
+					</div>
+
+					<!-- Open Fees -->
+					<div>
+						<label for="roll-open-fees" class="block text-sm font-medium text-gray-700 mb-1">
+							Open Fees
+						</label>
+						<input
+							id="roll-open-fees"
+							type="number"
+							bind:value={rollData.open_fees}
+							step="0.001"
+							min="0"
+							placeholder="0.00"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+						/>
+					</div>
+				</div>
+				<p class="text-xs text-gray-600 mt-2">
+					Stock: <strong>{formData.stock}</strong> | Type: <strong>{formData.type === 'P' ? 'Put' : 'Call'}</strong> |
+					Wheel Cycle: <strong>Rolled from {formData.expiration}</strong>
+				</p>
+			</div>
+		</div>
+	{/if}
+
 	<!-- Wheel Cycle Section -->
+	{#if !isRolling}
 	<div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
 		<h3 class="text-sm font-semibold text-blue-900 mb-3">Wheel Cycle Tracking</h3>
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -374,6 +679,7 @@
 			class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
 		></textarea>
 	</div>
+	{/if}
 
 	<!-- Form Actions -->
 	<div class="flex justify-end gap-3">
@@ -388,7 +694,11 @@
 			type="submit"
 			class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium cursor-pointer"
 		>
-			{position ? 'Update' : 'Create'} Position
+			{#if isRolling}
+				Roll Position
+			{:else}
+				{position ? 'Update' : 'Create'} Position
+			{/if}
 		</button>
 	</div>
 </form>

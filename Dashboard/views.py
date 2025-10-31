@@ -162,20 +162,31 @@ class PositionViewSet(viewsets.ModelViewSet):
         open_positions = positions.filter(close_date__isnull=True).count()
         closed_positions = positions.filter(close_date__isnull=False).count()
 
-        # Calculate total P/L for closed positions
+        # Calculate total realized P/L for closed positions
         closed_pos = positions.filter(close_date__isnull=False)
-        total_pl = Decimal('0.00')
+        realized_pl = Decimal('0.00')
         for pos in closed_pos:
             if pos.profit_loss:
-                total_pl += pos.profit_loss
+                realized_pl += pos.profit_loss
 
-        # Calculate total premium collected (premium per contract × num contracts × 100)
-        total_premium_dollars = Decimal('0.00')
-        for pos in positions:
-            total_premium_dollars += pos.premium * pos.num_contracts * 100
+        # Calculate total unrealized P/L for open positions
+        open_pos = positions.filter(close_date__isnull=True)
+        unrealized_pl = Decimal('0.00')
+        for pos in open_pos:
+            # Calculate unrealized P/L: premium collected - current value - fees
+            premium_collected = pos.premium * pos.num_contracts * 100
+            open_fees = pos.open_fees or Decimal('0.00')
+
+            if pos.current_option_price is not None:
+                # If we have current price, estimate P/L
+                current_value = pos.current_option_price * pos.num_contracts * 100
+                estimated_close_fees = open_fees  # Estimate close fees same as open
+                unrealized_pl += premium_collected - current_value - open_fees - estimated_close_fees
+            else:
+                # If no current price, just count premium minus open fees
+                unrealized_pl += premium_collected - open_fees
 
         # Calculate total collateral at risk for open positions
-        open_pos = positions.filter(close_date__isnull=True)
         total_collateral = Decimal('0.00')
         for pos in open_pos:
             total_collateral += pos.collateral_requirement
@@ -193,8 +204,8 @@ class PositionViewSet(viewsets.ModelViewSet):
             'total_positions': total_positions,
             'open_positions': open_positions,
             'closed_positions': closed_positions,
-            'total_profit_loss': total_pl,
-            'total_premium_collected': total_premium_dollars,
+            'realized_pl': realized_pl,
+            'unrealized_pl': unrealized_pl,
             'total_collateral_at_risk': total_collateral,
             'average_ar_closed_trades': avg_ar,
             'stocks_traded': stocks

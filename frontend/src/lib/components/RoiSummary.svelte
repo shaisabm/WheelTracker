@@ -1,6 +1,9 @@
 <script>
 	import { api } from '$lib/api';
 
+	// Collapsed state - start collapsed
+	let isExpanded = $state(false);
+
 	function formatCurrency(value) {
 		if (value === null || value === undefined) return '-';
 		return new Intl.NumberFormat('en-US', {
@@ -15,6 +18,10 @@
 		const numValue = typeof value === 'string' ? parseFloat(value) : value;
 		if (isNaN(numValue)) return '-';
 		return `${numValue.toFixed(2)}%`;
+	}
+
+	function toggleExpanded() {
+		isExpanded = !isExpanded;
 	}
 
 	// Date range state
@@ -100,11 +107,28 @@
 </script>
 
 <div class="bg-white rounded-lg shadow-lg mb-6 border border-gray-100">
-	<div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-white">
-		<h2 class="text-xl font-bold text-gray-900">Return on Investment (ROI)</h2>
-		<p class="text-sm text-gray-600 mt-1">Closed positions only (realized gains)</p>
-	</div>
+	<button
+		onclick={toggleExpanded}
+		class="w-full px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-white hover:from-green-100 hover:to-gray-50 transition-colors cursor-pointer text-left"
+	>
+		<div class="flex justify-between items-center">
+			<div>
+				<h2 class="text-xl font-bold text-gray-900">Return on Investment (ROI)</h2>
+				<p class="text-sm text-gray-600 mt-1">Closed positions only (realized gains)</p>
+			</div>
+			<svg
+				class="w-6 h-6 text-gray-600 transition-transform duration-200"
+				class:rotate-180={isExpanded}
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+			>
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+			</svg>
+		</div>
+	</button>
 
+	{#if isExpanded}
 	<!-- Date Range Picker -->
 	<div class="p-6 border-b border-gray-200 bg-gray-50">
 		<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -210,4 +234,11 @@
 			</div>
 		{/if}
 	</div>
+	{/if}
 </div>
+
+<style>
+	.rotate-180 {
+		transform: rotate(180deg);
+	}
+</style>

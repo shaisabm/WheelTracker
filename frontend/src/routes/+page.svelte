@@ -45,7 +45,11 @@
 
 	async function handleSave(position) {
 		try {
-			if (editingPosition) {
+			if (position.isRoll) {
+				// Handle roll operation: update existing position and create new one
+				await api.updatePosition(editingPosition.id, position.closePosition);
+				await api.createPosition(position.newPosition);
+			} else if (editingPosition) {
 				await api.updatePosition(editingPosition.id, position);
 			} else {
 				await api.createPosition(position);

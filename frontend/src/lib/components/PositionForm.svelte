@@ -29,8 +29,12 @@
 			const relatedPos = availablePositions.find(p => p.id === formData.related_to);
 			if (relatedPos) {
 				formData.stock = relatedPos.stock;
+				// Set wheel cycle name using the PREVIOUS position's expiration date
+				// Only set if there's an existing wheel_cycle_name OR if it's empty
 				if (relatedPos.wheel_cycle_name) {
 					formData.wheel_cycle_name = relatedPos.wheel_cycle_name;
+				} else if (!formData.wheel_cycle_name || formData.wheel_cycle_name === '') {
+					formData.wheel_cycle_name = `${relatedPos.stock} ${relatedPos.expiration} continues`;
 				}
 			}
 		}
@@ -119,10 +123,9 @@
 					bind:value={formData.wheel_cycle_name}
 					placeholder="e.g., AAPL Jan 2025"
 					class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
-					disabled={!isNewWheel && !formData.wheel_cycle_name}
 				/>
 				<p class="text-xs text-gray-600 mt-1">
-					{isNewWheel ? 'Give this wheel cycle a name' : 'Inherited from related position'}
+					{isNewWheel ? 'Give this wheel cycle a name' : 'Auto-generated for wheel continuation (editable)'}
 				</p>
 			</div>
 		</div>

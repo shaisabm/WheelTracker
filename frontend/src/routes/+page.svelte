@@ -1,10 +1,13 @@
 <script>
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
+	import { goto } from '$app/navigation';
 	import { api } from '$lib/api';
 	import PositionForm from '$lib/components/PositionForm.svelte';
 	import PositionTable from '$lib/components/PositionTable.svelte';
 	import Summary from '$lib/components/Summary.svelte';
+	import RoiSummary from '$lib/components/RoiSummary.svelte';
+	import Logo from '$lib/components/Logo.svelte';
 
 	let positions = $state([]);
 	let summary = $state(null);
@@ -80,6 +83,18 @@
 	function openNewPositionForm() {
 		editingPosition = null;
 		showForm = true;
+		// Scroll to form after it's rendered
+		setTimeout(() => {
+			document.getElementById('position-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		}, 100);
+	}
+
+	function handleLogout() {
+		if (browser) {
+			localStorage.removeItem('access_token');
+			localStorage.removeItem('refresh_token');
+			goto('/login');
+		}
 	}
 
 	$effect(() => {
@@ -110,22 +125,54 @@
 	});
 </script>
 
-<div class="min-h-screen bg-gray-50">
-	<header class="bg-white shadow">
-		<div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+<svelte:head>
+	<title>WheelTracker - Options Wheel Strategy Platform</title>
+	<meta name="description" content="Professional options trading tracker for the wheel strategy. Track positions, calculate ROI, and manage your covered calls and cash-secured puts." />
+</svelte:head>
+
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+	<!-- Professional Header with Gradient -->
+	<header class="bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg">
+		<div class="mx-auto px-4 py-4 sm:px-6 lg:px-8">
 			<div class="flex justify-between items-center">
-				<h1 class="text-3xl font-bold text-gray-900">Wheel Strategy Tracker</h1>
-				<button
-					onclick={openNewPositionForm}
-					class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
-				>
-					+ New Position
-				</button>
+				<!-- Logo and Brand Name -->
+				<div class="flex items-center gap-3">
+					<div class="bg-white rounded-lg p-2 shadow-md">
+						<Logo size={40} />
+					</div>
+					<div>
+						<h1 class="text-2xl font-bold text-white">WheelTracker</h1>
+						<p class="text-blue-100 text-sm">Options Wheel Strategy Platform</p>
+					</div>
+				</div>
+
+				<!-- Action Buttons -->
+				<div class="flex items-center gap-3">
+					<button
+						onclick={openNewPositionForm}
+						class="bg-white text-blue-600 hover:bg-blue-50 px-6 py-2.5 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 cursor-pointer"
+					>
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+						</svg>
+						New Position
+					</button>
+					<button
+						onclick={handleLogout}
+						class="bg-blue-800 text-white hover:bg-blue-900 px-4 py-2.5 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 cursor-pointer"
+						title="Logout"
+					>
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+						</svg>
+						Logout
+					</button>
+				</div>
 			</div>
 		</div>
 	</header>
 
-	<main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+	<main class="mx-auto px-4 py-8 sm:px-6 lg:px-8">
 		{#if error}
 			<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6">
 				<p class="font-bold">Error loading data:</p>
@@ -143,6 +190,8 @@
 			{#if summary}
 				<Summary {summary} />
 			{/if}
+
+			<RoiSummary />
 
 			<div class="bg-white rounded-lg shadow p-6 mb-6">
 				<h2 class="text-xl font-bold text-gray-900 mb-4">Filters</h2>
@@ -162,7 +211,7 @@
 						<select
 							id="filter-type"
 							bind:value={filterType}
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
 						>
 							<option value="">All</option>
 							<option value="P">Put</option>
@@ -174,7 +223,7 @@
 						<select
 							id="filter-status"
 							bind:value={filterStatus}
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
 						>
 							<option value="all">All</option>
 							<option value="open">Open</option>
@@ -185,7 +234,7 @@
 			</div>
 
 			{#if showForm}
-				<div class="bg-white rounded-lg shadow p-6 mb-6">
+				<div id="position-form" class="bg-white rounded-lg shadow p-6 mb-6">
 					<h2 class="text-xl font-bold text-gray-900 mb-4">
 						{editingPosition ? 'Edit Position' : 'New Position'}
 					</h2>

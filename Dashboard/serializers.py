@@ -39,6 +39,9 @@ class PositionSerializer(serializers.ModelSerializer):
     collateral_requirement = serializers.DecimalField(
         max_digits=10, decimal_places=3, read_only=True
     )
+    roi_percentage = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True, allow_null=True
+    )
 
     class Meta:
         model = Position
@@ -76,6 +79,7 @@ class PositionSerializer(serializers.ModelSerializer):
             'ar_on_remaining_premium',
             'percent_premium_earned',
             'set_break_even_price_puts',
+            'roi_percentage',
         ]
         read_only_fields = ['created_at', 'updated_at']
 
@@ -109,8 +113,8 @@ class PositionSummarySerializer(serializers.Serializer):
     total_positions = serializers.IntegerField()
     open_positions = serializers.IntegerField()
     closed_positions = serializers.IntegerField()
-    total_profit_loss = serializers.DecimalField(max_digits=12, decimal_places=2)
-    total_premium_collected = serializers.DecimalField(max_digits=12, decimal_places=2)
+    realized_pl = serializers.DecimalField(max_digits=12, decimal_places=2)
+    unrealized_pl = serializers.DecimalField(max_digits=12, decimal_places=2)
     total_collateral_at_risk = serializers.DecimalField(max_digits=12, decimal_places=2)
     average_ar_closed_trades = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True)
     stocks_traded = serializers.ListField(child=serializers.CharField())

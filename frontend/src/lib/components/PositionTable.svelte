@@ -39,6 +39,44 @@
 		}
 		return { text: 'Call', class: 'bg-blue-100 text-blue-800' };
 	}
+
+	function getReturnPercentage(position) {
+		if (!position.collateral_requirement || position.collateral_requirement === 0) {
+			return null;
+		}
+
+		if (position.is_open) {
+			// For open positions: (premium / collateral) * 100
+			const premiumDollars = position.premium * position.num_contracts * 100;
+			return (premiumDollars / position.collateral_requirement) * 100;
+		} else {
+			// For closed positions: (P/L / collateral) * 100
+			return (position.profit_loss / position.collateral_requirement) * 100;
+		}
+	}
+
+	function getUnrealizedPL(position) {
+		if (!position.is_open) {
+			return null;
+		}
+
+		// Calculate unrealized P/L for open positions
+		// If we have current_option_price, use it to estimate P/L
+		if (position.current_option_price !== null && position.current_option_price !== undefined) {
+			const premiumCollected = position.premium * position.num_contracts * 100;
+			const currentValue = position.current_option_price * position.num_contracts * 100;
+			const openFees = position.open_fees || 0;
+			// Estimate close fees as same as open fees
+			const estimatedCloseFees = openFees;
+
+			return premiumCollected - currentValue - openFees - estimatedCloseFees;
+		}
+
+		// If no current price, just show premium collected minus open fees
+		const premiumCollected = position.premium * position.num_contracts * 100;
+		const openFees = position.open_fees || 0;
+		return premiumCollected - openFees;
+	}
 </script>
 
 <div class="bg-white rounded-lg shadow overflow-hidden">
@@ -66,11 +104,14 @@
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contracts</th>
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Premium</th>
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Open Date</th>
+						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Close Date</th>
+						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Days (Open-Close)</th>
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiration</th>
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DTE</th>
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">P/L</th>
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AR%</th>
+						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Return</th>
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
 					</tr>
 				</thead>
@@ -111,6 +152,18 @@
 								<div class="text-sm text-gray-500">{formatDate(position.open_date)}</div>
 							</td>
 							<td class="px-4 py-3 whitespace-nowrap">
+								<div class="text-sm text-gray-500">{formatDate(position.close_date)}</div>
+							</td>
+							<td class="px-4 py-3 whitespace-nowrap">
+								<div class="text-sm text-gray-900">
+									{#if !position.is_open}
+										{position.days_in_trade}
+									{:else}
+										-
+									{/if}
+								</div>
+							</td>
+							<td class="px-4 py-3 whitespace-nowrap">
 								<div class="text-sm text-gray-500">{formatDate(position.expiration)}</div>
 							</td>
 							<td class="px-4 py-3 whitespace-nowrap">
@@ -128,16 +181,32 @@
 								</span>
 							</td>
 							<td class="px-4 py-3 whitespace-nowrap">
-								<div class="text-sm font-medium" class:text-green-600={position.profit_loss > 0} class:text-red-600={position.profit_loss < 0}>
-									{formatCurrency(position.profit_loss)}
-								</div>
+								{#if position.is_open}
+									{@const unrealizedPL = getUnrealizedPL(position)}
+									<div class="text-sm font-medium text-gray-500" class:text-green-600={unrealizedPL > 0} class:text-red-600={unrealizedPL < 0} title="Unrealized P/L (estimated)">
+										≈ {formatCurrency(unrealizedPL)}
+									</div>
+								{:else}
+									<div class="text-sm font-medium" class:text-green-600={position.profit_loss > 0} class:text-red-600={position.profit_loss < 0}>
+										{formatCurrency(position.profit_loss)}
+									</div>
+								{/if}
 							</td>
 							<td class="px-4 py-3 whitespace-nowrap">
 								<div class="text-sm text-gray-900">
 									{#if position.is_open}
-										{formatPercent(position.ar_if_held_to_expiration)}
+										~{formatPercent(position.ar_if_held_to_expiration)}
 									{:else}
 										{formatPercent(position.ar_of_closed_trade)}
+									{/if}
+								</div>
+							</td>
+							<td class="px-4 py-3 whitespace-nowrap">
+								<div class="text-sm font-medium text-blue-600">
+									{#if position.is_open}
+										~{formatPercent(getReturnPercentage(position))}
+									{:else}
+										{formatPercent(getReturnPercentage(position))}
 									{/if}
 								</div>
 							</td>
@@ -145,7 +214,7 @@
 								<div class="flex gap-2">
 									<button
 										onclick={() => onEdit(position)}
-										class="text-blue-600 hover:text-blue-900"
+										class="text-blue-600 hover:text-blue-900 cursor-pointer"
 										title="Edit"
 									>
 										<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,7 +223,7 @@
 									</button>
 									<button
 										onclick={() => onDelete(position.id)}
-										class="text-red-600 hover:text-red-900"
+										class="text-red-600 hover:text-red-900 cursor-pointer"
 										title="Delete"
 									>
 										<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -168,7 +237,7 @@
 						<!-- Expandable row for additional details -->
 						{#if position.notes || position.assigned === 'Yes'}
 							<tr class="bg-gray-50">
-								<td colspan="13" class="px-4 py-3">
+								<td colspan="16" class="px-4 py-3">
 									<div class="text-sm text-gray-700">
 										<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 											{#if position.notes}

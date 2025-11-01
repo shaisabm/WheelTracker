@@ -18,13 +18,13 @@
 	}
 </script>
 
-<div class="bg-white rounded-lg shadow mb-6">
-	<div class="px-6 py-4 border-b border-gray-200">
+<div class="bg-white rounded-lg shadow-lg mb-6 border border-gray-100">
+	<div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
 		<h2 class="text-xl font-bold text-gray-900">Portfolio Summary</h2>
 	</div>
 	<div class="p-6">
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-			<div class="bg-blue-50 rounded-lg p-4">
+			<div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200 shadow-sm hover:shadow-md transition-shadow">
 				<div class="text-sm font-medium text-blue-600 mb-1">Total Positions</div>
 				<div class="text-2xl font-bold text-blue-900">{summary.total_positions}</div>
 				<div class="text-xs text-blue-600 mt-1">
@@ -32,21 +32,23 @@
 				</div>
 			</div>
 
-			<div class="bg-green-50 rounded-lg p-4">
-				<div class="text-sm font-medium text-green-600 mb-1">Total P/L</div>
-				<div class="text-2xl font-bold" class:text-green-900={summary.total_profit_loss >= 0} class:text-red-900={summary.total_profit_loss < 0}>
-					{formatCurrency(summary.total_profit_loss)}
+			<div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200 shadow-sm hover:shadow-md transition-shadow">
+				<div class="text-sm font-medium text-green-600 mb-1">Realized P/L</div>
+				<div class="text-2xl font-bold" class:text-green-900={summary.realized_pl >= 0} class:text-red-900={summary.realized_pl < 0}>
+					{formatCurrency(summary.realized_pl)}
 				</div>
 				<div class="text-xs text-green-600 mt-1">Closed positions</div>
 			</div>
 
-			<div class="bg-purple-50 rounded-lg p-4">
-				<div class="text-sm font-medium text-purple-600 mb-1">Premium Collected</div>
-				<div class="text-2xl font-bold text-purple-900">{formatCurrency(summary.total_premium_collected)}</div>
-				<div class="text-xs text-purple-600 mt-1">All positions</div>
+			<div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200 shadow-sm hover:shadow-md transition-shadow">
+				<div class="text-sm font-medium text-purple-600 mb-1">Unrealized P/L</div>
+				<div class="text-2xl font-bold" class:text-purple-900={summary.unrealized_pl >= 0} class:text-red-900={summary.unrealized_pl < 0} title="Estimated unrealized P/L for open positions">
+					≈ {formatCurrency(summary.unrealized_pl)}
+				</div>
+				<div class="text-xs text-purple-600 mt-1">Open positions (estimated)</div>
 			</div>
 
-			<div class="bg-orange-50 rounded-lg p-4">
+			<div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200 shadow-sm hover:shadow-md transition-shadow">
 				<div class="text-sm font-medium text-orange-600 mb-1">Collateral at Risk</div>
 				<div class="text-2xl font-bold text-orange-900">{formatCurrency(summary.total_collateral_at_risk)}</div>
 				<div class="text-xs text-orange-600 mt-1">Open positions</div>

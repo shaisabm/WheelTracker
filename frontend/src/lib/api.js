@@ -1,17 +1,54 @@
 // API client for Django backend
+import { browser } from '$app/environment';
+import { goto } from '$app/navigation';
+
 const API_BASE_URL = 'http://localhost:8000/api';
+
+// Get auth headers
+function getAuthHeaders() {
+    const headers = {
+        'Content-Type': 'application/json',
+    };
+
+    if (browser) {
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+    }
+
+    return headers;
+}
 
 // Create fetch with timeout
 async function fetchWithTimeout(url, options = {}, timeout = 5000) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
+    // Add auth headers
+    const authHeaders = getAuthHeaders();
+    const mergedOptions = {
+        ...options,
+        headers: {
+            ...authHeaders,
+            ...options.headers,
+        },
+        signal: controller.signal
+    };
+
     try {
-        const response = await fetch(url, {
-            ...options,
-            signal: controller.signal
-        });
+        const response = await fetch(url, mergedOptions);
         clearTimeout(timeoutId);
+
+        // Handle 401 Unauthorized - redirect to login
+        if (response.status === 401) {
+            if (browser) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
+                goto('/login');
+            }
+        }
+
         return response;
     } catch (error) {
         clearTimeout(timeoutId);
@@ -51,34 +88,28 @@ export const api = {
     },
 
     async getPosition(id) {
-        const response = await fetch(`${API_BASE_URL}/positions/${id}/`);
+        const response = await fetchWithTimeout(`${API_BASE_URL}/positions/${id}/`);
         return handleResponse(response);
     },
 
     async createPosition(data) {
-        const response = await fetch(`${API_BASE_URL}/positions/`, {
+        const response = await fetchWithTimeout(`${API_BASE_URL}/positions/`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify(data),
         });
         return handleResponse(response);
     },
 
     async updatePosition(id, data) {
-        const response = await fetch(`${API_BASE_URL}/positions/${id}/`, {
+        const response = await fetchWithTimeout(`${API_BASE_URL}/positions/${id}/`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify(data),
         });
         return handleResponse(response);
     },
 
     async deletePosition(id) {
-        const response = await fetch(`${API_BASE_URL}/positions/${id}/`, {
+        const response = await fetchWithTimeout(`${API_BASE_URL}/positions/${id}/`, {
             method: 'DELETE',
         });
         if (response.status === 204) {
@@ -102,21 +133,41 @@ export const api = {
         const url = stock
             ? `${API_BASE_URL}/positions/by_stock/?stock=${stock}`
             : `${API_BASE_URL}/positions/by_stock/`;
-        const response = await fetch(url);
+        const response = await fetchWithTimeout(url);
         return handleResponse(response);
     },
 
     async fetchCurrentPrice(id) {
-        const response = await fetch(`${API_BASE_URL}/positions/${id}/fetch_current_price/`, {
+        const response = await fetchWithTimeout(`${API_BASE_URL}/positions/${id}/fetch_current_price/`, {
             method: 'POST',
         });
         return handleResponse(response);
     },
 
     async fetchAllCurrentPrices() {
-        const response = await fetch(`${API_BASE_URL}/positions/fetch_all_current_prices/`, {
+        const response = await fetchWithTimeout(`${API_BASE_URL}/positions/fetch_all_current_prices/`, {
             method: 'POST',
         });
         return handleResponse(response);
+    },
+
+    async getRoiSummary(startDate = '', endDate = '') {
+        try {
+            let url = `${API_BASE_URL}/positions/roi_summary/`;
+            const params = new URLSearchParams();
+            if (startDate) params.append('start_date', startDate);
+            if (endDate) params.append('end_date', endDate);
+
+            const queryString = params.toString();
+            if (queryString) {
+                url += `?${queryString}`;
+            }
+
+            const response = await fetchWithTimeout(url);
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to fetch ROI summary:', error);
+            throw error;
+        }
     },
 };

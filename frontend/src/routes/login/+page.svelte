@@ -2,6 +2,8 @@
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
 	import Logo from '$lib/components/Logo.svelte';
+	import { PUBLIC_API_BASE_URL } from '$env/static/public';
+	console.log(PUBLIC_API_BASE_URL);
 
 	let username = $state('');
 	let password = $state('');
@@ -14,7 +16,7 @@
 		loading = true;
 
 		try {
-			const response = await fetch('http://localhost:8000/api/auth/login/', {
+			const response = await fetch(`${PUBLIC_API_BASE_URL}/auth/login/`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

@@ -1,9 +1,10 @@
 <script>
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
+	import { PUBLIC_API_BASE_URL } from '$env/static/public';
 
 	let status = $state('Initializing...');
-	let apiUrl = 'http://localhost:8000/api/positions/';
+	let apiUrl = `${PUBLIC_API_BASE_URL}/positions/`;
 	let response = $state(null);
 	let error = $state(null);
 

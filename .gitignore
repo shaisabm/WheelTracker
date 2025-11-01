@@ -64,3 +64,4 @@ node_modules/
 frontend/build/
 frontend/.svelte-kit/
 frontend/node_modules/
+.vercel

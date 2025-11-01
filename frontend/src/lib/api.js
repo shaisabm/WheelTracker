@@ -1,8 +1,9 @@
 // API client for Django backend
 import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
+import { PUBLIC_API_BASE_URL } from '$env/static/public';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = PUBLIC_API_BASE_URL;
 
 // Get auth headers
 function getAuthHeaders() {
@@ -21,7 +22,7 @@ function getAuthHeaders() {
 }
 
 // Create fetch with timeout
-async function fetchWithTimeout(url, options = {}, timeout = 5000) {
+async function fetchWithTimeout(url, options = {}, timeout = 30000) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -29,6 +30,7 @@ async function fetchWithTimeout(url, options = {}, timeout = 5000) {
     const authHeaders = getAuthHeaders();
     const mergedOptions = {
         ...options,
+        credentials: 'include', // Include credentials for CORS
         headers: {
             ...authHeaders,
             ...options.headers,

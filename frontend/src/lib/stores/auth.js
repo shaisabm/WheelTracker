@@ -1,6 +1,7 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
+import { PUBLIC_API_BASE_URL } from '$env/static/public';
 
 function createAuthStore() {
 	const { subscribe, set, update } = writable({
@@ -59,7 +60,7 @@ function createAuthStore() {
 			if (!refreshToken) return false;
 
 			try {
-				const response = await fetch('http://localhost:8000/api/auth/refresh/', {
+				const response = await fetch(`${PUBLIC_API_BASE_URL}/auth/refresh/`, {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',

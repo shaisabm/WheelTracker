@@ -2,6 +2,7 @@
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
 	import Logo from '$lib/components/Logo.svelte';
+	import { PUBLIC_API_BASE_URL } from '$env/static/public';
 
 	let username = $state('');
 	let email = $state('');
@@ -29,7 +30,7 @@
 		}
 
 		try {
-			const response = await fetch('http://localhost:8000/api/auth/register/', {
+			const response = await fetch(`${PUBLIC_API_BASE_URL}/auth/register/`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

@@ -22,9 +22,11 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from Dashboard.auth_views import register
+from Dashboard.views import health_check
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("api/health/", health_check, name='health_check'),
     path("api/auth/login/", TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path("api/auth/refresh/", TokenRefreshView.as_view(), name='token_refresh'),
     path("api/auth/register/", register, name='register'),

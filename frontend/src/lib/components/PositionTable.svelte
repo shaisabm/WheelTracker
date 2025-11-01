@@ -54,6 +54,29 @@
 			return (position.profit_loss / position.collateral_requirement) * 100;
 		}
 	}
+
+	function getUnrealizedPL(position) {
+		if (!position.is_open) {
+			return null;
+		}
+
+		// Calculate unrealized P/L for open positions
+		// If we have current_option_price, use it to estimate P/L
+		if (position.current_option_price !== null && position.current_option_price !== undefined) {
+			const premiumCollected = position.premium * position.num_contracts * 100;
+			const currentValue = position.current_option_price * position.num_contracts * 100;
+			const openFees = position.open_fees || 0;
+			// Estimate close fees as same as open fees
+			const estimatedCloseFees = openFees;
+
+			return premiumCollected - currentValue - openFees - estimatedCloseFees;
+		}
+
+		// If no current price, just show premium collected minus open fees
+		const premiumCollected = position.premium * position.num_contracts * 100;
+		const openFees = position.open_fees || 0;
+		return premiumCollected - openFees;
+	}
 </script>
 
 <div class="bg-white rounded-lg shadow overflow-hidden">
@@ -158,9 +181,16 @@
 								</span>
 							</td>
 							<td class="px-4 py-3 whitespace-nowrap">
-								<div class="text-sm font-medium" class:text-green-600={position.profit_loss > 0} class:text-red-600={position.profit_loss < 0}>
-									{formatCurrency(position.profit_loss)}
-								</div>
+								{#if position.is_open}
+									{@const unrealizedPL = getUnrealizedPL(position)}
+									<div class="text-sm font-medium text-gray-500" class:text-green-600={unrealizedPL > 0} class:text-red-600={unrealizedPL < 0} title="Unrealized P/L (estimated)">
+										≈ {formatCurrency(unrealizedPL)}
+									</div>
+								{:else}
+									<div class="text-sm font-medium" class:text-green-600={position.profit_loss > 0} class:text-red-600={position.profit_loss < 0}>
+										{formatCurrency(position.profit_loss)}
+									</div>
+								{/if}
 							</td>
 							<td class="px-4 py-3 whitespace-nowrap">
 								<div class="text-sm text-gray-900">

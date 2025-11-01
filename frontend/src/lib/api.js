@@ -88,7 +88,7 @@ export const api = {
     },
 
     async getPosition(id) {
-        const response = await fetch(`${API_BASE_URL}/positions/${id}/`);
+        const response = await fetchWithTimeout(`${API_BASE_URL}/positions/${id}/`);
         return handleResponse(response);
     },
 
@@ -109,7 +109,7 @@ export const api = {
     },
 
     async deletePosition(id) {
-        const response = await fetch(`${API_BASE_URL}/positions/${id}/`, {
+        const response = await fetchWithTimeout(`${API_BASE_URL}/positions/${id}/`, {
             method: 'DELETE',
         });
         if (response.status === 204) {
@@ -133,19 +133,19 @@ export const api = {
         const url = stock
             ? `${API_BASE_URL}/positions/by_stock/?stock=${stock}`
             : `${API_BASE_URL}/positions/by_stock/`;
-        const response = await fetch(url);
+        const response = await fetchWithTimeout(url);
         return handleResponse(response);
     },
 
     async fetchCurrentPrice(id) {
-        const response = await fetch(`${API_BASE_URL}/positions/${id}/fetch_current_price/`, {
+        const response = await fetchWithTimeout(`${API_BASE_URL}/positions/${id}/fetch_current_price/`, {
             method: 'POST',
         });
         return handleResponse(response);
     },
 
     async fetchAllCurrentPrices() {
-        const response = await fetch(`${API_BASE_URL}/positions/fetch_all_current_prices/`, {
+        const response = await fetchWithTimeout(`${API_BASE_URL}/positions/fetch_all_current_prices/`, {
             method: 'POST',
         });
         return handleResponse(response);

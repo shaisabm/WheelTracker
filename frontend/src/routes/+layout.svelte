@@ -9,11 +9,16 @@
 	let { children } = $props();
 
 	onMount(() => {
-		// Check if user is authenticated (except on login and register pages)
 		const publicPages = ['/login', '/register'];
-		if (browser && !publicPages.includes($page.url.pathname)) {
-			const token = localStorage.getItem('access_token');
-			if (!token) {
+		const token = localStorage.getItem('access_token');
+
+		if (browser) {
+			// If user is logged in and trying to access login/register, redirect to dashboard
+			if (token && publicPages.includes($page.url.pathname)) {
+				goto('/');
+			}
+			// If user is not logged in and trying to access protected pages, redirect to login
+			else if (!token && !publicPages.includes($page.url.pathname)) {
 				goto('/login');
 			}
 		}

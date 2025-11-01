@@ -74,9 +74,7 @@ function createAuthStore() {
 
 				const data = await response.json();
 
-				if (browser) {
-					localStorage.setItem('access_token', data.access);
-				}
+				localStorage.setItem('access_token', data.access);
 
 				update(state => ({
 					...state,
@@ -87,10 +85,8 @@ function createAuthStore() {
 			} catch (error) {
 				console.error('Failed to refresh token:', error);
 				// Logout on refresh failure
-				if (browser) {
-					localStorage.removeItem('access_token');
-					localStorage.removeItem('refresh_token');
-				}
+				localStorage.removeItem('access_token');
+				localStorage.removeItem('refresh_token');
 				set({
 					isAuthenticated: false,
 					accessToken: null,

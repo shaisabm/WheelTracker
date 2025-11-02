@@ -17,6 +17,11 @@ DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = ['*']
 
+# Add this for Vercel logs
+if not DEBUG:
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
+
 # Application definition
 
 INSTALLED_APPS = [

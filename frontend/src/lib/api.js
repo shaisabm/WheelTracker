@@ -172,4 +172,52 @@ export const api = {
             throw error;
         }
     },
+
+    // Feedback operations
+    async createFeedback(data) {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/feedback/`, {
+                method: 'POST',
+                body: JSON.stringify(data),
+            });
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to create feedback:', error);
+            throw error;
+        }
+    },
+
+    async getAllFeedback() {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/feedback/`);
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to fetch feedback:', error);
+            throw error;
+        }
+    },
+
+    async updateFeedbackStatus(id, status) {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/feedback/${id}/`, {
+                method: 'PATCH',
+                body: JSON.stringify({ status }),
+            });
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to update feedback status:', error);
+            throw error;
+        }
+    },
+
+    // Check if current user is admin
+    async getCurrentUser() {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/auth/user/`);
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to fetch current user:', error);
+            throw error;
+        }
+    },
 };

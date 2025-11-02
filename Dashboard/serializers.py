@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Position
+from .models import Position, Feedback
 from decimal import Decimal
 
 
@@ -118,3 +118,34 @@ class PositionSummarySerializer(serializers.Serializer):
     total_collateral_at_risk = serializers.DecimalField(max_digits=12, decimal_places=2)
     average_ar_closed_trades = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True)
     stocks_traded = serializers.ListField(child=serializers.CharField())
+
+
+class FeedbackSerializer(serializers.ModelSerializer):
+    """Serializer for Feedback model"""
+    username = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = Feedback
+        fields = [
+            'id',
+            'type',
+            'subject',
+            'description',
+            'status',
+            'created_at',
+            'updated_at',
+            'username',
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'username']
+
+    def validate(self, data):
+        """Validate feedback data"""
+        # Only validate required fields on creation, not on partial updates
+        if not self.partial:
+            if not data.get('subject') or not data.get('subject').strip():
+                raise serializers.ValidationError("Subject is required")
+
+            if not data.get('description') or not data.get('description').strip():
+                raise serializers.ValidationError("Description is required")
+
+        return data

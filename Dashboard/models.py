@@ -323,3 +323,47 @@ class Position(models.Model):
         # ROI = (Premium / Collateral) * 100
         roi = (premium_dollars / collateral) * 100
         return roi
+
+
+class Feedback(models.Model):
+    """Model for user feedback, bug reports, and feature requests"""
+
+    TYPE_CHOICES = [
+        ('bug', 'Bug Report'),
+        ('feature', 'Feature Request'),
+        ('other', 'Other'),
+    ]
+
+    STATUS_CHOICES = [
+        ('new', 'New'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('closed', 'Closed'),
+    ]
+
+    # User who submitted the feedback
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='feedback')
+
+    # Feedback details
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, help_text="Type of feedback")
+    subject = models.CharField(max_length=200, help_text="Brief summary of the feedback")
+    description = models.TextField(help_text="Detailed description")
+
+    # Status tracking (only visible to admin)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
+    admin_notes = models.TextField(blank=True, help_text="Internal notes (not visible to users)")
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'created_at']),
+            models.Index(fields=['type']),
+            models.Index(fields=['status']),
+        ]
+
+    def __str__(self):
+        return f"{self.get_type_display()} - {self.subject} (by {self.user.username})"

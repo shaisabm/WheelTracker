@@ -151,16 +151,13 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # CORS settings - allow all Vercel preview deployments and local dev
 CORS_ALLOW_ALL_ORIGINS = True
-# CORS_ALLOWED_ORIGINS = [
-#     'http://localhost:5173',
-#     'http://127.0.0.1:5173',
-#     'https://*.vercel.app'
-# ]
-# Allow all frontend-*.vercel.app domains
-# CORS_ALLOWED_ORIGIN_REGEXES = [
-#     r"^https://frontend-[a-z0-9]+-shaisab-mistrys-projects\.vercel\.app$",
-#     r"^https://frontend-[a-z0-9-]+\.vercel\.app$",
-# ]
+
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'https://*.vercel.app'
+]
+
 CORS_ALLOW_CREDENTIALS = True
 
 # CSRF settings for API

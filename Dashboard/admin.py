@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Position
+from .models import Position, Feedback
 
 
 @admin.register(Position)
@@ -42,3 +42,29 @@ class PositionAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+@admin.register(Feedback)
+class FeedbackAdmin(admin.ModelAdmin):
+    list_display = ('subject', 'type', 'user', 'status', 'created_at')
+    list_filter = ('type', 'status', 'created_at')
+    search_fields = ('subject', 'description', 'user__username')
+    date_hierarchy = 'created_at'
+    readonly_fields = ('created_at', 'updated_at', 'user')
+
+    fieldsets = (
+        ('Feedback Information', {
+            'fields': ('user', 'type', 'subject', 'description')
+        }),
+        ('Status', {
+            'fields': ('status', 'admin_notes')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def has_add_permission(self, request):
+        # Don't allow creating feedback from admin
+        return False

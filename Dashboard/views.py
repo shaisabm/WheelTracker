@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAdminUser
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from django.db.models import Sum, Count, Avg, Q
 from decimal import Decimal
 from .models import Position, Feedback
@@ -323,13 +323,14 @@ class FeedbackViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         """
-        Only allow list/retrieve for admin users.
-        All authenticated users can create feedback.
+        Admin users can list, retrieve, update, and delete feedback.
+        Authenticated users can create feedback.
         """
         if self.action in ['list', 'retrieve', 'update', 'partial_update', 'destroy']:
             permission_classes = [IsAdminUser]
         else:
-            permission_classes = []
+            # Require authentication for creating feedback
+            permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
     def perform_create(self, serializer):

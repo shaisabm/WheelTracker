@@ -1,4 +1,5 @@
 {
+  "buildCommand": "bash build_files.sh",
   "rewrites": [
     {
       "source": "/(.*)",

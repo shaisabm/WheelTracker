@@ -150,21 +150,22 @@
 				<div class="flex items-center gap-2">
 					<Logo size={32} />
 					<div>
-						<h1 class="text-xl font-bold text-gray-900">WheelTracker Admin</h1>
-						<p class="text-sm text-gray-600">Feedback Management</p>
+						<h1 class="text-lg sm:text-xl font-bold text-gray-900">WheelTracker Admin</h1>
+						<p class="text-xs sm:text-sm text-gray-600 hidden sm:block">Feedback Management</p>
 					</div>
 				</div>
 
-				<div class="flex items-center gap-2">
+				<div class="flex items-center gap-1 sm:gap-2">
 					<a
 						href="/"
-						class="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer"
+						class="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors cursor-pointer"
 					>
-						Dashboard
+						<span class="hidden sm:inline">Dashboard</span>
+						<span class="sm:hidden">Home</span>
 					</a>
 					<button
 						onclick={handleLogout}
-						class="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer"
+						class="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors cursor-pointer"
 						title="Logout"
 					>
 						Logout
@@ -256,66 +257,73 @@
 				{:else}
 					<div class="divide-y divide-gray-200">
 						{#each filteredFeedback() as feedback (feedback.id)}
-							<div class="px-6 py-4 hover:bg-gray-50 transition-colors">
+							<div class="px-4 sm:px-6 py-4 hover:bg-gray-50 transition-colors">
 								<div class="flex items-start justify-between gap-4">
 									<div class="flex-1 min-w-0">
 										<!-- Header -->
-										<div class="flex items-center gap-2 mb-2">
+										<div class="flex flex-wrap items-center gap-2 mb-2">
 											<span class="px-2 py-1 text-xs font-semibold rounded {getTypeBadgeClass(feedback.type)}">
 												{getTypeLabel(feedback.type)}
 											</span>
 											<span class="px-2 py-1 text-xs font-semibold rounded {getStatusBadgeClass(feedback.status)}">
 												{getStatusLabel(feedback.status)}
 											</span>
-											<span class="text-sm text-gray-500">
+											<span class="text-xs sm:text-sm text-gray-500">
 												by {feedback.username}
 											</span>
-											<span class="text-sm text-gray-400">
+											<span class="text-xs sm:text-sm text-gray-400 hidden sm:inline">
 												• {formatDate(feedback.created_at)}
 											</span>
 										</div>
 
+										<!-- Date on mobile -->
+										<div class="text-xs text-gray-400 mb-2 sm:hidden">
+											{formatDate(feedback.created_at)}
+										</div>
+
 										<!-- Subject -->
-										<h3 class="text-lg font-semibold text-gray-900 mb-2">
+										<h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-2">
 											{feedback.subject}
 										</h3>
 
 										<!-- Description -->
-										<p class="text-gray-700 whitespace-pre-wrap mb-3">
+										<p class="text-sm sm:text-base text-gray-700 whitespace-pre-wrap mb-3">
 											{feedback.description}
 										</p>
 
 										<!-- Actions -->
-										<div class="flex items-center gap-2">
-											<span class="text-sm text-gray-600 mr-2">Change status:</span>
-											<button
-												onclick={() => updateStatus(feedback.id, 'new')}
-												class="px-3 py-1 text-xs font-medium rounded transition-colors {feedback.status === 'new' ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'}"
-												disabled={feedback.status === 'new'}
-											>
-												New
-											</button>
-											<button
-												onclick={() => updateStatus(feedback.id, 'in_progress')}
-												class="px-3 py-1 text-xs font-medium rounded transition-colors {feedback.status === 'in_progress' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'}"
-												disabled={feedback.status === 'in_progress'}
-											>
-												In Progress
-											</button>
-											<button
-												onclick={() => updateStatus(feedback.id, 'completed')}
-												class="px-3 py-1 text-xs font-medium rounded transition-colors {feedback.status === 'completed' ? 'bg-green-600 text-white' : 'bg-green-100 text-green-800 hover:bg-green-200'}"
-												disabled={feedback.status === 'completed'}
-											>
-												Completed
-											</button>
-											<button
-												onclick={() => updateStatus(feedback.id, 'closed')}
-												class="px-3 py-1 text-xs font-medium rounded transition-colors {feedback.status === 'closed' ? 'bg-gray-600 text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'}"
-												disabled={feedback.status === 'closed'}
-											>
-												Closed
-											</button>
+										<div class="space-y-2">
+											<span class="block text-xs sm:text-sm text-gray-600">Change status:</span>
+											<div class="flex flex-wrap gap-2">
+												<button
+													onclick={() => updateStatus(feedback.id, 'new')}
+													class="px-2 sm:px-3 py-1 text-xs font-medium rounded transition-colors {feedback.status === 'new' ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'}"
+													disabled={feedback.status === 'new'}
+												>
+													New
+												</button>
+												<button
+													onclick={() => updateStatus(feedback.id, 'in_progress')}
+													class="px-2 sm:px-3 py-1 text-xs font-medium rounded transition-colors {feedback.status === 'in_progress' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'}"
+													disabled={feedback.status === 'in_progress'}
+												>
+													In Progress
+												</button>
+												<button
+													onclick={() => updateStatus(feedback.id, 'completed')}
+													class="px-2 sm:px-3 py-1 text-xs font-medium rounded transition-colors {feedback.status === 'completed' ? 'bg-green-600 text-white' : 'bg-green-100 text-green-800 hover:bg-green-200'}"
+													disabled={feedback.status === 'completed'}
+												>
+													Completed
+												</button>
+												<button
+													onclick={() => updateStatus(feedback.id, 'closed')}
+													class="px-2 sm:px-3 py-1 text-xs font-medium rounded transition-colors {feedback.status === 'closed' ? 'bg-gray-600 text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'}"
+													disabled={feedback.status === 'closed'}
+												>
+													Closed
+												</button>
+											</div>
 										</div>
 									</div>
 								</div>

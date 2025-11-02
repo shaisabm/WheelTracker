@@ -157,7 +157,10 @@
         showFeedbackModal = true;
         mobileMenuOpen = false;
     }
-
+    const handleMobileLogout = () => {
+        handleLogout();
+        mobileMenuOpen = false;
+    }
 
 </script>
 
@@ -284,7 +287,7 @@
                         </a>
                     {/if}
                     <button
-                            onclick={() => {showFeedbackModal = true; mobileMenuOpen = false;}}
+                            onclick={handleMobileFeedback}
                             class="w-full text-left text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 cursor-pointer"
                     >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -306,7 +309,7 @@
                         <span>Buy Me a Coffee</span>
                     </a>
                     <button
-                            onclick={() => {handleLogout(); mobileMenuOpen = false;}}
+                            onclick={handleMobileLogout}
                             class="w-full text-left text-red-600 hover:bg-red-50 px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer"
                     >
                         Logout

@@ -1,11 +1,11 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from django.db.models import Sum, Count, Avg, Q
 from decimal import Decimal
-from .models import Position
-from .serializers import PositionSerializer, PositionSummarySerializer
+from .models import Position, Feedback
+from .serializers import PositionSerializer, PositionSummarySerializer, FeedbackSerializer
 import yfinance as yf
 
 @api_view(['GET'])
@@ -299,3 +299,40 @@ class PositionViewSet(viewsets.ModelViewSet):
             'start_date': start_date,
             'end_date': end_date
         })
+
+
+class FeedbackViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing user feedback, bug reports, and feature requests.
+    Regular users can create feedback. Only admins can view all feedback.
+    """
+    serializer_class = FeedbackSerializer
+    filterset_fields = ['type', 'status']
+    search_fields = ['subject', 'description']
+    ordering_fields = ['created_at', 'type', 'status']
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        """
+        Admin users can see all feedback.
+        Regular users can only see their own feedback.
+        """
+        if self.request.user.is_staff or self.request.user.is_superuser:
+            return Feedback.objects.all()
+        return Feedback.objects.filter(user=self.request.user)
+
+    def get_permissions(self):
+        """
+        Admin users can list, retrieve, update, and delete feedback.
+        Authenticated users can create feedback.
+        """
+        if self.action in ['list', 'retrieve', 'update', 'partial_update', 'destroy']:
+            permission_classes = [IsAdminUser]
+        else:
+            # Require authentication for creating feedback
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
+    def perform_create(self, serializer):
+        """Automatically assign the logged-in user to new feedback"""
+        serializer.save(user=self.request.user)

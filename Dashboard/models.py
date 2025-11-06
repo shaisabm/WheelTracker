@@ -367,3 +367,56 @@ class Feedback(models.Model):
 
     def __str__(self):
         return f"{self.get_type_display()} - {self.subject} (by {self.user.username})"
+
+
+class Notification(models.Model):
+    """Model for system notifications sent to users
+
+    Each notification is sent to a specific user. To send to all users,
+    individual notification records are created for each user via bulk_create.
+    """
+
+    TYPE_CHOICES = [
+        ('info', 'Information'),
+        ('warning', 'Warning'),
+        ('success', 'Success'),
+        ('announcement', 'Announcement'),
+    ]
+
+    # User who receives the notification
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='notifications',
+        help_text="User who receives this notification"
+    )
+
+    # Notification details
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='info', help_text="Type of notification")
+    title = models.CharField(max_length=200, help_text="Notification title")
+    message = models.TextField(help_text="Notification message")
+
+    # Tracking
+    is_read = models.BooleanField(default=False, help_text="Has the user read this notification")
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='created_notifications',
+        help_text="Admin who created this notification"
+    )
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(null=True, blank=True, help_text="When the notification was read")
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'is_read']),
+            models.Index(fields=['created_at']),
+        ]
+
+    def __str__(self):
+        user_str = self.user.username if self.user else "All Users"
+        return f"{self.get_type_display()} to {user_str}: {self.title}"

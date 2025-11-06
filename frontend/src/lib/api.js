@@ -220,4 +220,72 @@ export const api = {
             throw error;
         }
     },
+
+    // Notification operations
+    async getNotifications() {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/`);
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to fetch notifications:', error);
+            throw error;
+        }
+    },
+
+    async getUnreadNotificationCount() {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/unread_count/`);
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to fetch unread count:', error);
+            throw error;
+        }
+    },
+
+    async markNotificationAsRead(id) {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/${id}/mark_as_read/`, {
+                method: 'POST',
+            });
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to mark notification as read:', error);
+            throw error;
+        }
+    },
+
+    async markAllNotificationsAsRead() {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/mark_all_as_read/`, {
+                method: 'POST',
+            });
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to mark all as read:', error);
+            throw error;
+        }
+    },
+
+    async sendNotification(data) {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/send_notification/`, {
+                method: 'POST',
+                body: JSON.stringify(data),
+            });
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to send notification:', error);
+            throw error;
+        }
+    },
+
+    async getUsersList() {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/users_list/`);
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to fetch users list:', error);
+            throw error;
+        }
+    },
 };

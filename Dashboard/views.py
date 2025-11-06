@@ -347,11 +347,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Filter notifications by current user"""
-        user = self.request.user
-        # Get notifications for this user or global notifications (user=None)
-        return Notification.objects.filter(
-            Q(user=user) | Q(user__isnull=True)
-        )
+        return Notification.objects.filter(user=self.request.user)
 
     @action(detail=False, methods=['post'], permission_classes=[IsAdminUser])
     def send_notification(self, request):
@@ -364,31 +360,31 @@ class NotificationViewSet(viewsets.ModelViewSet):
         title = serializer.validated_data['title']
         message = serializer.validated_data['message']
 
-        created_notifications = []
-
         if user_ids:
             # Send to specific users
-            for user_id in user_ids:
-                notification = Notification.objects.create(
+            notifications = [
+                Notification(
                     user_id=user_id,
                     type=notification_type,
                     title=title,
                     message=message,
                     created_by=request.user
-                )
-                created_notifications.append(notification)
+                ) for user_id in user_ids
+            ]
+            created_notifications = Notification.objects.bulk_create(notifications)
         else:
             # Send to all users
             users = User.objects.all()
-            for user in users:
-                notification = Notification.objects.create(
+            notifications = [
+                Notification(
                     user=user,
                     type=notification_type,
                     title=title,
                     message=message,
                     created_by=request.user
-                )
-                created_notifications.append(notification)
+                ) for user in users
+            ]
+            created_notifications = Notification.objects.bulk_create(notifications)
 
         return Response({
             'success': True,

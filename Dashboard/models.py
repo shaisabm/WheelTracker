@@ -370,7 +370,11 @@ class Feedback(models.Model):
 
 
 class Notification(models.Model):
-    """Model for system notifications sent to users"""
+    """Model for system notifications sent to users
+
+    Each notification is sent to a specific user. To send to all users,
+    individual notification records are created for each user via bulk_create.
+    """
 
     TYPE_CHOICES = [
         ('info', 'Information'),
@@ -379,14 +383,12 @@ class Notification(models.Model):
         ('announcement', 'Announcement'),
     ]
 
-    # User who receives the notification (null means all users)
+    # User who receives the notification
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='notifications',
-        null=True,
-        blank=True,
-        help_text="Specific user to receive notification. Leave blank to send to all users."
+        help_text="User who receives this notification"
     )
 
     # Notification details

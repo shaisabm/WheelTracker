@@ -156,7 +156,7 @@ class NotificationSerializer(serializers.ModelSerializer):
     """Serializer for Notification model"""
 
     username = serializers.CharField(source='user.username', read_only=True)
-    created_by_username = serializers.CharField(source='created_by.username', read_only=True)
+    created_by_username = serializers.CharField(source='created_by.username', read_only=True, allow_null=True)
 
     class Meta:
         model = Notification

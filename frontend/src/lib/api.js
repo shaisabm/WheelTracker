@@ -220,4 +220,64 @@ export const api = {
             throw error;
         }
     },
+
+    // Credit Spread operations
+    async getCreditSpreads() {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/credit-spreads/`);
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to fetch credit spreads:', error);
+            throw error;
+        }
+    },
+
+    async getCreditSpread(id) {
+        const response = await fetchWithTimeout(`${API_BASE_URL}/credit-spreads/${id}/`);
+        return handleResponse(response);
+    },
+
+    async createCreditSpread(data) {
+        const response = await fetchWithTimeout(`${API_BASE_URL}/credit-spreads/`, {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+        return handleResponse(response);
+    },
+
+    async updateCreditSpread(id, data) {
+        const response = await fetchWithTimeout(`${API_BASE_URL}/credit-spreads/${id}/`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+        return handleResponse(response);
+    },
+
+    async deleteCreditSpread(id) {
+        const response = await fetchWithTimeout(`${API_BASE_URL}/credit-spreads/${id}/`, {
+            method: 'DELETE',
+        });
+        if (response.status === 204) {
+            return { success: true };
+        }
+        return handleResponse(response);
+    },
+
+    async getCreditSpreadSummary() {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/credit-spreads/summary/`);
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to fetch credit spread summary:', error);
+            throw error;
+        }
+    },
+
+    async getCreditSpreadsByStock(stock = null) {
+        const url = stock
+            ? `${API_BASE_URL}/credit-spreads/by_stock/?stock=${stock}`
+            : `${API_BASE_URL}/credit-spreads/by_stock/`;
+        const response = await fetchWithTimeout(url);
+        return handleResponse(response);
+    },
 };

@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from .models import Position, Feedback
+from .models import Position, Feedback, Notification
 from decimal import Decimal
+from django.contrib.auth.models import User
 
 
 class PositionSerializer(serializers.ModelSerializer):
@@ -149,3 +150,51 @@ class FeedbackSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Description is required")
 
         return data
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    """Serializer for Notification model"""
+
+    username = serializers.CharField(source='user.username', read_only=True)
+    created_by_username = serializers.CharField(source='created_by.username', read_only=True)
+
+    class Meta:
+        model = Notification
+        fields = [
+            'id',
+            'user',
+            'username',
+            'type',
+            'title',
+            'message',
+            'is_read',
+            'created_by',
+            'created_by_username',
+            'created_at',
+            'read_at',
+        ]
+        read_only_fields = ['created_at', 'read_at', 'created_by']
+
+
+class NotificationCreateSerializer(serializers.Serializer):
+    """Serializer for creating notifications"""
+
+    user_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=False,
+        help_text="List of user IDs to send notification to. Leave empty for all users."
+    )
+    type = serializers.ChoiceField(
+        choices=Notification.TYPE_CHOICES,
+        default='info'
+    )
+    title = serializers.CharField(max_length=200)
+    message = serializers.CharField()
+
+    def validate_user_ids(self, value):
+        """Validate that all user IDs exist"""
+        if value:
+            existing_users = User.objects.filter(id__in=value).count()
+            if existing_users != len(value):
+                raise serializers.ValidationError("Some user IDs do not exist")
+        return value

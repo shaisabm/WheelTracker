@@ -3,9 +3,11 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from django.db.models import Sum, Count, Avg, Q
+from django.utils import timezone
 from decimal import Decimal
-from .models import Position, Feedback
-from .serializers import PositionSerializer, PositionSummarySerializer, FeedbackSerializer
+from .models import Position, Feedback, Notification
+from .serializers import PositionSerializer, PositionSummarySerializer, FeedbackSerializer, NotificationSerializer, NotificationCreateSerializer
+from django.contrib.auth.models import User
 import yfinance as yf
 
 @api_view(['GET'])
@@ -336,3 +338,95 @@ class FeedbackViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Automatically assign the logged-in user to new feedback"""
         serializer.save(user=self.request.user)
+
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing notifications"""
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """Filter notifications by current user"""
+        user = self.request.user
+        # Get notifications for this user or global notifications (user=None)
+        return Notification.objects.filter(
+            Q(user=user) | Q(user__isnull=True)
+        )
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAdminUser])
+    def send_notification(self, request):
+        """Send notification to users (admin only)"""
+        serializer = NotificationCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user_ids = serializer.validated_data.get('user_ids', [])
+        notification_type = serializer.validated_data['type']
+        title = serializer.validated_data['title']
+        message = serializer.validated_data['message']
+
+        created_notifications = []
+
+        if user_ids:
+            # Send to specific users
+            for user_id in user_ids:
+                notification = Notification.objects.create(
+                    user_id=user_id,
+                    type=notification_type,
+                    title=title,
+                    message=message,
+                    created_by=request.user
+                )
+                created_notifications.append(notification)
+        else:
+            # Send to all users
+            users = User.objects.all()
+            for user in users:
+                notification = Notification.objects.create(
+                    user=user,
+                    type=notification_type,
+                    title=title,
+                    message=message,
+                    created_by=request.user
+                )
+                created_notifications.append(notification)
+
+        return Response({
+            'success': True,
+            'message': f'Notification sent to {len(created_notifications)} user(s)',
+            'count': len(created_notifications)
+        }, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'])
+    def mark_as_read(self, request, pk=None):
+        """Mark notification as read"""
+        notification = self.get_object()
+        notification.is_read = True
+        notification.read_at = timezone.now()
+        notification.save()
+        serializer = self.get_serializer(notification)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['post'])
+    def mark_all_as_read(self, request):
+        """Mark all notifications as read for current user"""
+        updated = self.get_queryset().filter(is_read=False).update(
+            is_read=True,
+            read_at=timezone.now()
+        )
+        return Response({
+            'success': True,
+            'message': f'Marked {updated} notification(s) as read',
+            'count': updated
+        })
+
+    @action(detail=False, methods=['get'])
+    def unread_count(self, request):
+        """Get count of unread notifications"""
+        count = self.get_queryset().filter(is_read=False).count()
+        return Response({'count': count})
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAdminUser])
+    def users_list(self, request):
+        """Get list of all users for admin to send notifications"""
+        users = User.objects.all().values('id', 'username', 'email', 'first_name', 'last_name')
+        return Response(list(users))

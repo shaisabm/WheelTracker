@@ -6,6 +6,7 @@ echo "Starting build process..."
 echo "Installing Python dependencies..."
 pip3 install -r requirements.txt
 
+# Run database migrations
 python3 manage.py migrate
 
 # Collect static files

@@ -153,8 +153,16 @@ class CreditSpread(models.Model):
 
     @property
     def net_credit(self):
-        """Calculate the net credit received when opening: (short_premium - long_premium) * num_contracts * 100 - open_fees"""
+        """
+        Calculate the net credit received when opening the spread.
+
+        Formula:
+            gross_credit = (short_premium - long_premium) * num_contracts * 100
+            net_credit = gross_credit - open_fees
+        """
+        # Calculate the gross credit received before fees
         gross_credit = (self.short_premium - self.long_premium) * self.num_contracts * 100
+        # Subtract open fees to get the net credit
         return gross_credit - self.open_fees
 
     @property
@@ -193,7 +201,16 @@ class CreditSpread(models.Model):
 
     @property
     def roi_percentage(self):
-        """Calculate ROI: (net_credit / max_risk) * 100"""
+        """
+        Calculate the maximum possible ROI: (net_credit / max_risk) * 100
+
+        This represents the maximum theoretical ROI if the position is held to
+        expiration and achieves full profit (credit spread expires worthless).
+        For closed positions, use profit_loss to calculate actual realized ROI.
+
+        Returns:
+            Decimal or None: ROI percentage, or None if max_risk <= 0
+        """
         if self.max_risk <= 0:
             return None
         return (self.net_credit / self.max_risk) * 100

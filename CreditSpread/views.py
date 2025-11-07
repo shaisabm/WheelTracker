@@ -39,28 +39,28 @@ class CreditSpreadViewSet(viewsets.ModelViewSet):
             spread.max_risk for spread in open_spreads
         ) if open_count > 0 else Decimal('0.00')
 
-        # Calculate total P/L for closed positions
-        total_closed_pl = sum(
-            spread.profit_loss for spread in closed_spreads if spread.profit_loss is not None
-        ) if closed_count > 0 else Decimal('0.00')
+        # Calculate all metrics for closed positions in a single pass
+        total_closed_pl = Decimal('0.00')
+        winning_spreads = 0
+        total_days_in_trade = 0
+        closed_rois = []
 
-        # Calculate win rate (profitable closed spreads / total closed spreads)
-        winning_spreads = sum(
-            1 for spread in closed_spreads if spread.profit_loss and spread.profit_loss > 0
-        )
+        for spread in closed_spreads:
+            # P/L calculation
+            if spread.profit_loss is not None:
+                total_closed_pl += spread.profit_loss
+                if spread.profit_loss > 0:
+                    winning_spreads += 1
+            # Days in trade
+            total_days_in_trade += spread.days_in_trade
+            # ROI collection
+            if spread.roi_percentage is not None:
+                closed_rois.append(spread.roi_percentage)
+
+        # Calculate averages and rates
         win_rate = (winning_spreads / closed_count * 100) if closed_count > 0 else 0
-
-        # Calculate average days in trade for closed positions
-        avg_days = sum(
-            spread.days_in_trade for spread in closed_spreads
-        ) / closed_count if closed_count > 0 else 0
-
-        # Calculate average ROI for closed positions
-        closed_rois = [
-            spread.roi_percentage for spread in closed_spreads
-            if spread.roi_percentage is not None
-        ]
-        avg_roi = sum(closed_rois) / len(closed_rois) if closed_rois else 0
+        avg_days = (total_days_in_trade / closed_count) if closed_count > 0 else 0
+        avg_roi = (sum(closed_rois) / len(closed_rois)) if closed_rois else 0
 
         return Response({
             'total_spreads': spreads.count(),

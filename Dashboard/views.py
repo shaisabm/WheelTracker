@@ -352,45 +352,83 @@ class NotificationViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], permission_classes=[IsAdminUser])
     def send_notification(self, request):
         """Send notification to users (admin only)"""
-        serializer = NotificationCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        import logging
+        logger = logging.getLogger(__name__)
 
-        user_ids = serializer.validated_data.get('user_ids', [])
-        notification_type = serializer.validated_data['type']
-        title = serializer.validated_data['title']
-        message = serializer.validated_data['message']
+        try:
+            serializer = NotificationCreateSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
 
-        if user_ids:
-            # Send to specific users
-            notifications = [
-                Notification(
-                    user_id=user_id,
-                    type=notification_type,
-                    title=title,
-                    message=message,
-                    created_by=request.user
-                ) for user_id in user_ids
-            ]
-            created_notifications = Notification.objects.bulk_create(notifications)
-        else:
-            # Send to all users
-            users = User.objects.all()
-            notifications = [
-                Notification(
-                    user=user,
-                    type=notification_type,
-                    title=title,
-                    message=message,
-                    created_by=request.user
-                ) for user in users
-            ]
-            created_notifications = Notification.objects.bulk_create(notifications)
+            user_ids = serializer.validated_data.get('user_ids', [])
+            notification_type = serializer.validated_data['type']
+            title = serializer.validated_data['title']
+            message = serializer.validated_data['message']
 
-        return Response({
-            'success': True,
-            'message': f'Notification sent to {len(created_notifications)} user(s)',
-            'count': len(created_notifications)
-        }, status=status.HTTP_201_CREATED)
+            if user_ids:
+                # Send to specific users
+                # Verify all user IDs exist first
+                existing_user_ids = list(User.objects.filter(id__in=user_ids).values_list('id', flat=True))
+                if len(existing_user_ids) != len(user_ids):
+                    missing_ids = set(user_ids) - set(existing_user_ids)
+                    logger.error(f"User IDs do not exist: {missing_ids}")
+                    return Response({
+                        'error': f'Some user IDs do not exist: {missing_ids}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                notifications = [
+                    Notification(
+                        user_id=user_id,
+                        type=notification_type,
+                        title=title,
+                        message=message,
+                        created_by=request.user
+                    ) for user_id in existing_user_ids
+                ]
+            else:
+                # Send to all users
+                users = list(User.objects.all())
+                if not users:
+                    logger.warning("No users found in the system")
+                    return Response({
+                        'error': 'No users found in the system'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                notifications = [
+                    Notification(
+                        user=user,
+                        type=notification_type,
+                        title=title,
+                        message=message,
+                        created_by=request.user
+                    ) for user in users
+                ]
+
+            # Bulk create notifications
+            if notifications:
+                try:
+                    created_notifications = Notification.objects.bulk_create(notifications)
+                    logger.info(f"Successfully created {len(created_notifications)} notifications")
+                    return Response({
+                        'success': True,
+                        'message': f'Notification sent to {len(created_notifications)} user(s)',
+                        'count': len(created_notifications)
+                    }, status=status.HTTP_201_CREATED)
+                except Exception as db_error:
+                    logger.error(f"Database error during bulk_create: {str(db_error)}", exc_info=True)
+                    return Response({
+                        'error': f'Database error: {str(db_error)}'
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            else:
+                logger.warning("No notifications to create")
+                return Response({
+                    'error': 'No notifications were created'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            logger.error(f"Error sending notification: {str(e)}", exc_info=True)
+            return Response({
+                'error': f'Failed to send notification: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['post'])
     def mark_as_read(self, request, pk=None):

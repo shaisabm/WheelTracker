@@ -9,6 +9,9 @@ from .models import Position, Feedback, Notification
 from .serializers import PositionSerializer, PositionSummarySerializer, FeedbackSerializer, NotificationSerializer, NotificationCreateSerializer
 from django.contrib.auth.models import User
 import yfinance as yf
+import logging
+
+logger = logging.getLogger(__name__)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -352,9 +355,6 @@ class NotificationViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], permission_classes=[IsAdminUser])
     def send_notification(self, request):
         """Send notification to users (admin only)"""
-        import logging
-        logger = logging.getLogger(__name__)
-
         try:
             serializer = NotificationCreateSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
@@ -404,25 +404,19 @@ class NotificationViewSet(viewsets.ModelViewSet):
                 ]
 
             # Bulk create notifications
-            if notifications:
-                try:
-                    created_notifications = Notification.objects.bulk_create(notifications)
-                    logger.info(f"Successfully created {len(created_notifications)} notifications")
-                    return Response({
-                        'success': True,
-                        'message': f'Notification sent to {len(created_notifications)} user(s)',
-                        'count': len(created_notifications)
-                    }, status=status.HTTP_201_CREATED)
-                except Exception as db_error:
-                    logger.error(f"Database error during bulk_create: {str(db_error)}", exc_info=True)
-                    return Response({
-                        'error': f'Database error: {str(db_error)}'
-                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            else:
-                logger.warning("No notifications to create")
+            try:
+                created_notifications = Notification.objects.bulk_create(notifications)
+                logger.info(f"Successfully created {len(created_notifications)} notifications")
                 return Response({
-                    'error': 'No notifications were created'
-                }, status=status.HTTP_400_BAD_REQUEST)
+                    'success': True,
+                    'message': f'Notification sent to {len(created_notifications)} user(s)',
+                    'count': len(created_notifications)
+                }, status=status.HTTP_201_CREATED)
+            except Exception as db_error:
+                logger.error(f"Database error during bulk_create: {str(db_error)}", exc_info=True)
+                return Response({
+                    'error': f'Database error: {str(db_error)}'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         except Exception as e:
             logger.error(f"Error sending notification: {str(e)}", exc_info=True)

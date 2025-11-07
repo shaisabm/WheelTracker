@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Position, Feedback
+from .models import Position, Feedback, Notification
 
 
 @admin.register(Position)
@@ -68,3 +68,36 @@ class FeedbackAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         # Don't allow creating feedback from admin
         return False
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ('title', 'type', 'user_display', 'is_read', 'created_by', 'created_at')
+    list_filter = ('type', 'is_read', 'created_at')
+    search_fields = ('title', 'message', 'user__username')
+    date_hierarchy = 'created_at'
+    readonly_fields = ('created_at', 'read_at', 'created_by')
+
+    fieldsets = (
+        ('Notification Details', {
+            'fields': ('user', 'type', 'title', 'message')
+        }),
+        ('Status', {
+            'fields': ('is_read', 'read_at')
+        }),
+        ('Metadata', {
+            'fields': ('created_by', 'created_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def user_display(self, obj):
+        """Display user or 'All Users' if null"""
+        return obj.user.username if obj.user else 'All Users'
+    user_display.short_description = 'Recipient'
+
+    def save_model(self, request, obj, form, change):
+        """Set created_by to current admin user"""
+        if not change:  # Only set on creation
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)

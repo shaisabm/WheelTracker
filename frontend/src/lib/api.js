@@ -228,6 +228,13 @@ export const api = {
             return handleResponse(response);
         } catch (error) {
             console.error('Failed to fetch credit spreads:', error);
+    // Notification operations
+    async getNotifications() {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/`);
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to fetch notifications:', error);
             throw error;
         }
     },
@@ -238,6 +245,12 @@ export const api = {
             return handleResponse(response);
         } catch (error) {
             console.error('Failed to fetch credit spread:', error);
+    async getUnreadNotificationCount() {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/unread_count/`);
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to fetch unread count:', error);
             throw error;
         }
     },
@@ -251,6 +264,14 @@ export const api = {
             return handleResponse(response);
         } catch (error) {
             console.error('Failed to create credit spread:', error);
+    async markNotificationAsRead(id) {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/${id}/mark_as_read/`, {
+                method: 'POST',
+            });
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to mark notification as read:', error);
             throw error;
         }
     },
@@ -264,6 +285,14 @@ export const api = {
             return handleResponse(response);
         } catch (error) {
             console.error('Failed to update credit spread:', error);
+    async markAllNotificationsAsRead() {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/mark_all_as_read/`, {
+                method: 'POST',
+            });
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to mark all as read:', error);
             throw error;
         }
     },
@@ -289,6 +318,15 @@ export const api = {
             return handleResponse(response);
         } catch (error) {
             console.error('Failed to fetch credit spread summary:', error);
+    async sendNotification(data) {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/send_notification/`, {
+                method: 'POST',
+                body: JSON.stringify(data),
+            });
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to send notification:', error);
             throw error;
         }
     },
@@ -302,6 +340,12 @@ export const api = {
             return handleResponse(response);
         } catch (error) {
             console.error('Failed to fetch credit spreads by stock:', error);
+    async getUsersList() {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/users_list/`);
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to fetch users list:', error);
             throw error;
         }
     },

@@ -3,10 +3,15 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from django.db.models import Sum, Count, Avg, Q
+from django.utils import timezone
 from decimal import Decimal
-from .models import Position, Feedback
-from .serializers import PositionSerializer, PositionSummarySerializer, FeedbackSerializer
+from .models import Position, Feedback, Notification
+from .serializers import PositionSerializer, PositionSummarySerializer, FeedbackSerializer, NotificationSerializer, NotificationCreateSerializer
+from django.contrib.auth.models import User
 import yfinance as yf
+import logging
+
+logger = logging.getLogger(__name__)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -336,3 +341,120 @@ class FeedbackViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Automatically assign the logged-in user to new feedback"""
         serializer.save(user=self.request.user)
+
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing notifications"""
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """Filter notifications by current user"""
+        return Notification.objects.filter(user=self.request.user)
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAdminUser])
+    def send_notification(self, request):
+        """Send notification to users (admin only)"""
+        try:
+            serializer = NotificationCreateSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            user_ids = serializer.validated_data.get('user_ids', [])
+            notification_type = serializer.validated_data['type']
+            title = serializer.validated_data['title']
+            message = serializer.validated_data['message']
+
+            if user_ids:
+                # Send to specific users
+                # Verify all user IDs exist first
+                existing_user_ids = list(User.objects.filter(id__in=user_ids).values_list('id', flat=True))
+                if len(existing_user_ids) != len(user_ids):
+                    missing_ids = set(user_ids) - set(existing_user_ids)
+                    logger.error(f"User IDs do not exist: {missing_ids}")
+                    return Response({
+                        'error': f'Some user IDs do not exist: {missing_ids}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                notifications = [
+                    Notification(
+                        user_id=user_id,
+                        type=notification_type,
+                        title=title,
+                        message=message,
+                        created_by=request.user
+                    ) for user_id in existing_user_ids
+                ]
+            else:
+                # Send to all users
+                users = list(User.objects.all())
+                if not users:
+                    logger.warning("No users found in the system")
+                    return Response({
+                        'error': 'No users found in the system'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                notifications = [
+                    Notification(
+                        user=user,
+                        type=notification_type,
+                        title=title,
+                        message=message,
+                        created_by=request.user
+                    ) for user in users
+                ]
+
+            # Bulk create notifications
+            try:
+                created_notifications = Notification.objects.bulk_create(notifications)
+                logger.info(f"Successfully created {len(created_notifications)} notifications")
+                return Response({
+                    'success': True,
+                    'message': f'Notification sent to {len(created_notifications)} user(s)',
+                    'count': len(created_notifications)
+                }, status=status.HTTP_201_CREATED)
+            except Exception as db_error:
+                logger.error(f"Database error during bulk_create: {str(db_error)}", exc_info=True)
+                return Response({
+                    'error': f'Database error: {str(db_error)}'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        except Exception as e:
+            logger.error(f"Error sending notification: {str(e)}", exc_info=True)
+            return Response({
+                'error': f'Failed to send notification: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['post'])
+    def mark_as_read(self, request, pk=None):
+        """Mark notification as read"""
+        notification = self.get_object()
+        notification.is_read = True
+        notification.read_at = timezone.now()
+        notification.save()
+        serializer = self.get_serializer(notification)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['post'])
+    def mark_all_as_read(self, request):
+        """Mark all notifications as read for current user"""
+        updated = self.get_queryset().filter(is_read=False).update(
+            is_read=True,
+            read_at=timezone.now()
+        )
+        return Response({
+            'success': True,
+            'message': f'Marked {updated} notification(s) as read',
+            'count': updated
+        })
+
+    @action(detail=False, methods=['get'])
+    def unread_count(self, request):
+        """Get count of unread notifications"""
+        count = self.get_queryset().filter(is_read=False).count()
+        return Response({'count': count})
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAdminUser])
+    def users_list(self, request):
+        """Get list of all users for admin to send notifications"""
+        users = User.objects.all().values('id', 'username', 'email', 'first_name', 'last_name')
+        return Response(list(users))

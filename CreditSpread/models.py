@@ -121,11 +121,12 @@ class CreditSpread(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-open_date', 'stock']
+        ordering = ['-created_at']
         indexes = [
             models.Index(fields=['stock']),
             models.Index(fields=['open_date']),
             models.Index(fields=['expiration']),
+            models.Index(fields=['created_at']),
         ]
 
     def __str__(self):

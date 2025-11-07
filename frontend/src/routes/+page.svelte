@@ -216,10 +216,7 @@
                         </a>
                     {/if}
                     <!-- Notifications -->
-                    <div class="relative">
-                        <NotificationButton bind:showPanel={showNotificationPanel} />
-                        <NotificationPanel bind:show={showNotificationPanel} />
-                    </div>
+                    <NotificationButton bind:showPanel={showNotificationPanel} />
                     <button
                             onclick={() => showFeedbackModal = true}
                             class="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer flex items-center gap-1.5"
@@ -435,6 +432,9 @@
 
     <!-- Feedback Modal -->
     <FeedbackModal bind:show={showFeedbackModal} onSuccess={handleFeedbackSuccess}/>
+
+    <!-- Notification Panel -->
+    <NotificationPanel bind:show={showNotificationPanel} />
 </div>
 
 <style>

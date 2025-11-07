@@ -115,10 +115,6 @@
         }, 3000);
     }
 
-    $effect(() => {
-        filteredSpreads;
-    });
-
     let filteredSpreads = $derived(() => {
         let filtered = spreads;
 

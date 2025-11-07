@@ -233,34 +233,54 @@ export const api = {
     },
 
     async getCreditSpread(id) {
-        const response = await fetchWithTimeout(`${API_BASE_URL}/credit-spreads/${id}/`);
-        return handleResponse(response);
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/credit-spreads/${id}/`);
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to fetch credit spread:', error);
+            throw error;
+        }
     },
 
     async createCreditSpread(data) {
-        const response = await fetchWithTimeout(`${API_BASE_URL}/credit-spreads/`, {
-            method: 'POST',
-            body: JSON.stringify(data),
-        });
-        return handleResponse(response);
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/credit-spreads/`, {
+                method: 'POST',
+                body: JSON.stringify(data),
+            });
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to create credit spread:', error);
+            throw error;
+        }
     },
 
     async updateCreditSpread(id, data) {
-        const response = await fetchWithTimeout(`${API_BASE_URL}/credit-spreads/${id}/`, {
-            method: 'PUT',
-            body: JSON.stringify(data),
-        });
-        return handleResponse(response);
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/credit-spreads/${id}/`, {
+                method: 'PUT',
+                body: JSON.stringify(data),
+            });
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to update credit spread:', error);
+            throw error;
+        }
     },
 
     async deleteCreditSpread(id) {
-        const response = await fetchWithTimeout(`${API_BASE_URL}/credit-spreads/${id}/`, {
-            method: 'DELETE',
-        });
-        if (response.status === 204) {
-            return { success: true };
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/credit-spreads/${id}/`, {
+                method: 'DELETE',
+            });
+            if (response.status === 204) {
+                return { success: true };
+            }
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to delete credit spread:', error);
+            throw error;
         }
-        return handleResponse(response);
     },
 
     async getCreditSpreadSummary() {
@@ -274,10 +294,15 @@ export const api = {
     },
 
     async getCreditSpreadsByStock(stock = null) {
-        const url = stock
-            ? `${API_BASE_URL}/credit-spreads/by_stock/?stock=${stock}`
-            : `${API_BASE_URL}/credit-spreads/by_stock/`;
-        const response = await fetchWithTimeout(url);
-        return handleResponse(response);
+        try {
+            const url = stock
+                ? `${API_BASE_URL}/credit-spreads/by_stock/?stock=${stock}`
+                : `${API_BASE_URL}/credit-spreads/by_stock/`;
+            const response = await fetchWithTimeout(url);
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to fetch credit spreads by stock:', error);
+            throw error;
+        }
     },
 };

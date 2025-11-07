@@ -221,6 +221,13 @@ export const api = {
         }
     },
 
+    // Credit Spread operations
+    async getCreditSpreads() {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/credit-spreads/`);
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to fetch credit spreads:', error);
     // Notification operations
     async getNotifications() {
         try {
@@ -232,6 +239,12 @@ export const api = {
         }
     },
 
+    async getCreditSpread(id) {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/credit-spreads/${id}/`);
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to fetch credit spread:', error);
     async getUnreadNotificationCount() {
         try {
             const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/unread_count/`);
@@ -242,6 +255,15 @@ export const api = {
         }
     },
 
+    async createCreditSpread(data) {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/credit-spreads/`, {
+                method: 'POST',
+                body: JSON.stringify(data),
+            });
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to create credit spread:', error);
     async markNotificationAsRead(id) {
         try {
             const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/${id}/mark_as_read/`, {
@@ -254,6 +276,15 @@ export const api = {
         }
     },
 
+    async updateCreditSpread(id, data) {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/credit-spreads/${id}/`, {
+                method: 'PUT',
+                body: JSON.stringify(data),
+            });
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to update credit spread:', error);
     async markAllNotificationsAsRead() {
         try {
             const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/mark_all_as_read/`, {
@@ -266,6 +297,27 @@ export const api = {
         }
     },
 
+    async deleteCreditSpread(id) {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/credit-spreads/${id}/`, {
+                method: 'DELETE',
+            });
+            if (response.status === 204) {
+                return { success: true };
+            }
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to delete credit spread:', error);
+            throw error;
+        }
+    },
+
+    async getCreditSpreadSummary() {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/credit-spreads/summary/`);
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to fetch credit spread summary:', error);
     async sendNotification(data) {
         try {
             const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/send_notification/`, {
@@ -279,6 +331,15 @@ export const api = {
         }
     },
 
+    async getCreditSpreadsByStock(stock = null) {
+        try {
+            const url = stock
+                ? `${API_BASE_URL}/credit-spreads/by_stock/?stock=${stock}`
+                : `${API_BASE_URL}/credit-spreads/by_stock/`;
+            const response = await fetchWithTimeout(url);
+            return handleResponse(response);
+        } catch (error) {
+            console.error('Failed to fetch credit spreads by stock:', error);
     async getUsersList() {
         try {
             const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/users_list/`);

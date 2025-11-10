@@ -161,17 +161,23 @@ class Position(models.Model):
 
     @property
     def days_in_trade(self):
-        """Calculate the number of days the trade was held"""
+        """Calculate the number of days the trade was held (using ET timezone)"""
         if self.close_date:
             return (self.close_date - self.open_date).days
-        return (datetime.now().date() - self.open_date).days
+        import pytz
+        et_tz = pytz.timezone('US/Eastern')
+        today_et = datetime.now(et_tz).date()
+        return (today_et - self.open_date).days
 
     @property
     def days_to_expiration(self):
-        """Calculate the number of days remaining until expiration"""
+        """Calculate the number of days remaining until expiration (using ET timezone)"""
         if self.close_date:
             return 0
-        days = (self.expiration - datetime.now().date()).days
+        import pytz
+        et_tz = pytz.timezone('US/Eastern')
+        today_et = datetime.now(et_tz).date()
+        days = (self.expiration - today_et).days
         return max(0, days)
 
     @property

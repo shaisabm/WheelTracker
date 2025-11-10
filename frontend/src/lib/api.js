@@ -228,6 +228,8 @@ export const api = {
             return handleResponse(response);
         } catch (error) {
             console.error('Failed to fetch credit spreads:', error);
+        }
+    },
     // Notification operations
     async getNotifications() {
         try {
@@ -245,6 +247,8 @@ export const api = {
             return handleResponse(response);
         } catch (error) {
             console.error('Failed to fetch credit spread:', error);
+        }
+    },
     async getUnreadNotificationCount() {
         try {
             const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/unread_count/`);
@@ -264,6 +268,8 @@ export const api = {
             return handleResponse(response);
         } catch (error) {
             console.error('Failed to create credit spread:', error);
+        }
+    },
     async markNotificationAsRead(id) {
         try {
             const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/${id}/mark_as_read/`, {
@@ -285,6 +291,8 @@ export const api = {
             return handleResponse(response);
         } catch (error) {
             console.error('Failed to update credit spread:', error);
+        }
+    },
     async markAllNotificationsAsRead() {
         try {
             const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/mark_all_as_read/`, {
@@ -318,6 +326,8 @@ export const api = {
             return handleResponse(response);
         } catch (error) {
             console.error('Failed to fetch credit spread summary:', error);
+        }
+    },
     async sendNotification(data) {
         try {
             const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/send_notification/`, {
@@ -340,6 +350,8 @@ export const api = {
             return handleResponse(response);
         } catch (error) {
             console.error('Failed to fetch credit spreads by stock:', error);
+        }
+    },
     async getUsersList() {
         try {
             const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/users_list/`);

@@ -4,12 +4,13 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from django.db.models import Sum, Count, Avg, Q
 from django.utils import timezone
-from decimal import Decimal
 from .models import Position, Feedback, Notification
 from .serializers import PositionSerializer, PositionSummarySerializer, FeedbackSerializer, NotificationSerializer, NotificationCreateSerializer
 from django.contrib.auth.models import User
 import yfinance as yf
 import logging
+from decimal import Decimal
+from Dashboard.utils import auto_close_expired_positions
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,14 @@ class PositionViewSet(viewsets.ModelViewSet):
     ordering = ['-open_date']
 
     def get_queryset(self):
-        """Filter positions by logged-in user"""
+        """
+        Filter positions by logged-in user.
+        Also automatically close expired positions and reopen extended positions.
+        """
+
+        # Run auto-close/reopen logic for this user's positions
+        auto_close_expired_positions()
+
         return Position.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
@@ -46,7 +54,9 @@ class PositionViewSet(viewsets.ModelViewSet):
         if not serializer.is_valid():
             print(f"Validation errors: {serializer.errors}")
             print(f"Request data: {request.data}")
+
         return super().create(request, *args, **kwargs)
+
 
     @action(detail=True, methods=['post'])
     def fetch_current_price(self, request, pk=None):

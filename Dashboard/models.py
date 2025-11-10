@@ -298,19 +298,27 @@ class Position(models.Model):
 
     @property
     def set_break_even_price_puts(self):
-        """Calculate break-even price for puts in a set (basic calculation)"""
+        """
+        Calculate break-even price for puts
+        Formula: (strike price * (100 * number of contracts) - P/L) / (number of contracts * 100)
+        """
         if self.type != 'P':
             return None
 
-        # Get all puts in this set for this stock
-        # This is a simplified calculation - actual implementation would need to sum across all positions in set
-        total_premium_loss = Decimal('0.00')
+        # Only calculate for closed positions
+        if not self.close_date:
+            return None
 
-        if self.close_date and self.premium_paid_to_close:
-            if self.premium_paid_to_close > self.premium:
-                total_premium_loss = self.premium_paid_to_close - self.premium
+        pl = self.profit_loss
+        if pl is None:
+            return None
 
-        return self.strike - total_premium_loss
+        # Break Even = (Strike * Shares - P/L) / Shares
+        total_shares = self.num_contracts * 100
+        strike_value = self.strike * total_shares
+
+        break_even = (strike_value - pl) / total_shares
+        return break_even
 
     @property
     def roi_percentage(self):

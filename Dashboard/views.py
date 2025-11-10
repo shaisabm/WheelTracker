@@ -58,119 +58,119 @@ class PositionViewSet(viewsets.ModelViewSet):
         return super().create(request, *args, **kwargs)
 
 
-    @action(detail=True, methods=['post'])
-    def fetch_current_price(self, request, pk=None):
-        """
-        Fetch current option price from Yahoo Finance for a specific position
-        """
-        position = self.get_object()
+    # @action(detail=True, methods=['post'])
+    # def fetch_current_price(self, request, pk=None):
+    #     """
+    #     Fetch current option price from Yahoo Finance for a specific position
+    #     """
+    #     position = self.get_object()
+    #
+    #     try:
+    #         ticker = yf.Ticker(position.stock)
+    #
+    #         # Format expiration date for yfinance
+    #         exp_date = position.expiration.strftime('%Y-%m-%d')
+    #
+    #         # Get options chain for the expiration date
+    #         try:
+    #             options = ticker.option_chain(exp_date)
+    #         except Exception as e:
+    #             return Response(
+    #                 {'error': f'No options data available for {position.stock} expiring {exp_date}'},
+    #                 status=status.HTTP_404_NOT_FOUND
+    #             )
+    #
+    #         # Get the appropriate chain based on option type
+    #         if position.type == 'P':
+    #             chain = options.puts
+    #         else:
+    #             chain = options.calls
+    #
+    #         # Find the option with matching strike
+    #         strike_float = float(position.strike)
+    #         matching_options = chain[chain['strike'] == strike_float]
+    #
+    #         if matching_options.empty:
+    #             return Response(
+    #                 {'error': f'No option found with strike ${position.strike}'},
+    #                 status=status.HTTP_404_NOT_FOUND
+    #             )
+    #
+    #         # Get the mid price (average of bid and ask)
+    #         option = matching_options.iloc[0]
+    #         bid = option.get('bid', 0)
+    #         ask = option.get('ask', 0)
+    #
+    #         if bid == 0 and ask == 0:
+    #             # Try to use lastPrice if bid/ask not available
+    #             mid_price = option.get('lastPrice', 0)
+    #         else:
+    #             mid_price = (bid + ask) / 2
+    #
+    #         # Update the position with the current price
+    #         position.current_option_price = Decimal(str(round(mid_price, 2)))
+    #         position.save()
+    #
+    #         serializer = self.get_serializer(position)
+    #         return Response({
+    #             'success': True,
+    #             'current_option_price': position.current_option_price,
+    #             'position': serializer.data
+    #         })
+    #
+    #     except Exception as e:
+    #         return Response(
+    #             {'error': str(e)},
+    #             status=status.HTTP_500_INTERNAL_SERVER_ERROR
+    #         )
 
-        try:
-            ticker = yf.Ticker(position.stock)
-
-            # Format expiration date for yfinance
-            exp_date = position.expiration.strftime('%Y-%m-%d')
-
-            # Get options chain for the expiration date
-            try:
-                options = ticker.option_chain(exp_date)
-            except Exception as e:
-                return Response(
-                    {'error': f'No options data available for {position.stock} expiring {exp_date}'},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-
-            # Get the appropriate chain based on option type
-            if position.type == 'P':
-                chain = options.puts
-            else:
-                chain = options.calls
-
-            # Find the option with matching strike
-            strike_float = float(position.strike)
-            matching_options = chain[chain['strike'] == strike_float]
-
-            if matching_options.empty:
-                return Response(
-                    {'error': f'No option found with strike ${position.strike}'},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-
-            # Get the mid price (average of bid and ask)
-            option = matching_options.iloc[0]
-            bid = option.get('bid', 0)
-            ask = option.get('ask', 0)
-
-            if bid == 0 and ask == 0:
-                # Try to use lastPrice if bid/ask not available
-                mid_price = option.get('lastPrice', 0)
-            else:
-                mid_price = (bid + ask) / 2
-
-            # Update the position with the current price
-            position.current_option_price = Decimal(str(round(mid_price, 2)))
-            position.save()
-
-            serializer = self.get_serializer(position)
-            return Response({
-                'success': True,
-                'current_option_price': position.current_option_price,
-                'position': serializer.data
-            })
-
-        except Exception as e:
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-    @action(detail=False, methods=['post'])
-    def fetch_all_current_prices(self, request):
-        """
-        Fetch current option prices for all open positions
-        """
-        open_positions = Position.objects.filter(close_date__isnull=True)
-        updated_count = 0
-        errors = []
-
-        for position in open_positions:
-            try:
-                ticker = yf.Ticker(position.stock)
-                exp_date = position.expiration.strftime('%Y-%m-%d')
-
-                options = ticker.option_chain(exp_date)
-                chain = options.puts if position.type == 'P' else options.calls
-
-                strike_float = float(position.strike)
-                matching_options = chain[chain['strike'] == strike_float]
-
-                if not matching_options.empty:
-                    option = matching_options.iloc[0]
-                    bid = option.get('bid', 0)
-                    ask = option.get('ask', 0)
-
-                    if bid == 0 and ask == 0:
-                        mid_price = option.get('lastPrice', 0)
-                    else:
-                        mid_price = (bid + ask) / 2
-
-                    position.current_option_price = Decimal(str(round(mid_price, 2)))
-                    position.save()
-                    updated_count += 1
-
-            except Exception as e:
-                errors.append({
-                    'position_id': position.id,
-                    'stock': position.stock,
-                    'error': str(e)
-                })
-
-        return Response({
-            'success': True,
-            'updated_count': updated_count,
-            'total_open_positions': open_positions.count(),
-            'errors': errors
-        })
+    # @action(detail=False, methods=['post'])
+    # def fetch_all_current_prices(self, request):
+    #     """
+    #     Fetch current option prices for all open positions
+    #     """
+    #     open_positions = Position.objects.filter(close_date__isnull=True)
+    #     updated_count = 0
+    #     errors = []
+    #
+    #     for position in open_positions:
+    #         try:
+    #             ticker = yf.Ticker(position.stock)
+    #             exp_date = position.expiration.strftime('%Y-%m-%d')
+    #
+    #             options = ticker.option_chain(exp_date)
+    #             chain = options.puts if position.type == 'P' else options.calls
+    #
+    #             strike_float = float(position.strike)
+    #             matching_options = chain[chain['strike'] == strike_float]
+    #
+    #             if not matching_options.empty:
+    #                 option = matching_options.iloc[0]
+    #                 bid = option.get('bid', 0)
+    #                 ask = option.get('ask', 0)
+    #
+    #                 if bid == 0 and ask == 0:
+    #                     mid_price = option.get('lastPrice', 0)
+    #                 else:
+    #                     mid_price = (bid + ask) / 2
+    #
+    #                 position.current_option_price = Decimal(str(round(mid_price, 2)))
+    #                 position.save()
+    #                 updated_count += 1
+    #
+    #         except Exception as e:
+    #             errors.append({
+    #                 'position_id': position.id,
+    #                 'stock': position.stock,
+    #                 'error': str(e)
+    #             })
+    #
+    #     return Response({
+    #         'success': True,
+    #         'updated_count': updated_count,
+    #         'total_open_positions': open_positions.count(),
+    #         'errors': errors
+    #     })
 
     @action(detail=False, methods=['get'])
     def summary(self, request):

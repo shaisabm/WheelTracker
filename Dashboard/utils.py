@@ -64,14 +64,14 @@ def auto_close_expired_positions():
             # Expiration is in the future - reopen
             position.close_date = None
             position.premium_paid_to_close = None
-            position.close_fees = Decimal('0.00')
+            position.close_fees = None
             position.save()
             reopened_count += 1
         elif position.expiration == today_et and now_et.time() < closing_time:
             # Expiration is today but before 4:00 PM ET - reopen
             position.close_date = None
             position.premium_paid_to_close = None
-            position.close_fees = Decimal('0.00')
+            position.close_fees = None
             position.save()
             reopened_count += 1
 

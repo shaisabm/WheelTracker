@@ -131,27 +131,27 @@ export const api = {
         }
     },
 
-    async getByStock(stock = null) {
-        const url = stock
-            ? `${API_BASE_URL}/positions/by_stock/?stock=${stock}`
-            : `${API_BASE_URL}/positions/by_stock/`;
-        const response = await fetchWithTimeout(url);
-        return handleResponse(response);
-    },
+    // async getByStock(stock = null) {
+    //     const url = stock
+    //         ? `${API_BASE_URL}/positions/by_stock/?stock=${stock}`
+    //         : `${API_BASE_URL}/positions/by_stock/`;
+    //     const response = await fetchWithTimeout(url);
+    //     return handleResponse(response);
+    // },
 
-    async fetchCurrentPrice(id) {
-        const response = await fetchWithTimeout(`${API_BASE_URL}/positions/${id}/fetch_current_price/`, {
-            method: 'POST',
-        });
-        return handleResponse(response);
-    },
+    // async fetchCurrentPrice(id) {
+    //     const response = await fetchWithTimeout(`${API_BASE_URL}/positions/${id}/fetch_current_price/`, {
+    //         method: 'POST',
+    //     });
+    //     return handleResponse(response);
+    // },
 
-    async fetchAllCurrentPrices() {
-        const response = await fetchWithTimeout(`${API_BASE_URL}/positions/fetch_all_current_prices/`, {
-            method: 'POST',
-        });
-        return handleResponse(response);
-    },
+    // async fetchAllCurrentPrices() {
+    //     const response = await fetchWithTimeout(`${API_BASE_URL}/positions/fetch_all_current_prices/`, {
+    //         method: 'POST',
+    //     });
+    //     return handleResponse(response);
+    // },
 
     async getRoiSummary(startDate = '', endDate = '') {
         try {
@@ -228,6 +228,7 @@ export const api = {
             return handleResponse(response);
         } catch (error) {
             console.error('Failed to fetch credit spreads:', error);
+            throw error;
         }
     },
     // Notification operations
@@ -247,6 +248,7 @@ export const api = {
             return handleResponse(response);
         } catch (error) {
             console.error('Failed to fetch credit spread:', error);
+            throw error;
         }
     },
     async getUnreadNotificationCount() {
@@ -268,6 +270,7 @@ export const api = {
             return handleResponse(response);
         } catch (error) {
             console.error('Failed to create credit spread:', error);
+            throw error;
         }
     },
     async markNotificationAsRead(id) {
@@ -291,6 +294,7 @@ export const api = {
             return handleResponse(response);
         } catch (error) {
             console.error('Failed to update credit spread:', error);
+            throw error;
         }
     },
     async markAllNotificationsAsRead() {
@@ -326,6 +330,7 @@ export const api = {
             return handleResponse(response);
         } catch (error) {
             console.error('Failed to fetch credit spread summary:', error);
+            throw error;
         }
     },
     async sendNotification(data) {
@@ -350,6 +355,7 @@ export const api = {
             return handleResponse(response);
         } catch (error) {
             console.error('Failed to fetch credit spreads by stock:', error);
+            throw error;
         }
     },
     async getUsersList() {

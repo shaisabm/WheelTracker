@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 from decimal import Decimal
 from datetime import datetime
+import pytz
 
 
 class Position(models.Model):
@@ -164,7 +165,6 @@ class Position(models.Model):
         """Calculate the number of days the trade was held (using ET timezone)"""
         if self.close_date:
             return (self.close_date - self.open_date).days
-        import pytz
         et_tz = pytz.timezone('US/Eastern')
         today_et = datetime.now(et_tz).date()
         return (today_et - self.open_date).days
@@ -174,7 +174,6 @@ class Position(models.Model):
         """Calculate the number of days remaining until expiration (using ET timezone)"""
         if self.close_date:
             return 0
-        import pytz
         et_tz = pytz.timezone('US/Eastern')
         today_et = datetime.now(et_tz).date()
         days = (self.expiration - today_et).days

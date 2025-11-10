@@ -202,8 +202,10 @@ class Position(models.Model):
     def collateral_requirement(self):
         """Calculate the collateral requirement for the position"""
         # For cash-secured puts: strike * 100 * num_contracts
-        # For covered calls: This would be based on cost basis, but we'll use strike as approximation
-        return self.strike * 100 * self.num_contracts
+        # For covered calls: This would be 0 since you already own the shares
+        if self.type == 'P':
+            return self.strike * 100 * self.num_contracts
+        return 0
 
     @property
     def risk_less_premium(self):

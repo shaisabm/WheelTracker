@@ -5,7 +5,8 @@ from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from django.db.models import Sum, Count, Avg, Q
 from django.utils import timezone
 from .models import Position, Feedback, Notification
-from .serializers import PositionSerializer, PositionSummarySerializer, FeedbackSerializer, NotificationSerializer, NotificationCreateSerializer
+from .serializers import PositionSerializer, PositionSummarySerializer, FeedbackSerializer, NotificationSerializer, \
+    NotificationCreateSerializer
 from django.contrib.auth.models import User
 import yfinance as yf
 import logging
@@ -14,12 +15,12 @@ from Dashboard.utils import auto_close_expired_positions
 
 logger = logging.getLogger(__name__)
 
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def health_check(request):
     """Simple health check endpoint"""
     return Response({'status': 'ok', 'message': 'Django is running'})
-
 
 
 class PositionViewSet(viewsets.ModelViewSet):
@@ -56,7 +57,6 @@ class PositionViewSet(viewsets.ModelViewSet):
             print(f"Request data: {request.data}")
 
         return super().create(request, *args, **kwargs)
-
 
     # @action(detail=True, methods=['post'])
     # def fetch_current_price(self, request, pk=None):
@@ -184,11 +184,11 @@ class PositionViewSet(viewsets.ModelViewSet):
         open_positions = positions.filter(close_date__isnull=True).count()
         closed_positions = positions.filter(close_date__isnull=False).count()
 
-        # Calculate total realized P/L for closed positions
+        # Calculate total realized P/L for closed positions excludes positions with assigned=Yes because the premium went toward the cost base of the shares
         closed_pos = positions.filter(close_date__isnull=False)
         realized_pl = Decimal('0.00')
         for pos in closed_pos:
-            if pos.profit_loss:
+            if pos.profit_loss and (pos.assigned == "No"):
                 realized_pl += pos.profit_loss
 
         # Calculate total unrealized P/L for open positions
@@ -213,8 +213,8 @@ class PositionViewSet(viewsets.ModelViewSet):
         for pos in open_pos:
             total_collateral += pos.collateral_requirement
 
-        # Calculate average AR for closed trades
-        closed_with_ar = [pos for pos in closed_pos if pos.ar_of_closed_trade is not None]
+        # Calculate average AR for closed trades excludes positions with assigned=Yes
+        closed_with_ar = [pos for pos in closed_pos if (pos.ar_of_closed_trade is not None) and (pos.assigned == "No")]
         avg_ar = None
         if closed_with_ar:
             avg_ar = sum(pos.ar_of_closed_trade for pos in closed_with_ar) / len(closed_with_ar)
@@ -270,7 +270,7 @@ class PositionViewSet(viewsets.ModelViewSet):
         end_date = request.query_params.get('end_date')
 
         # Start with closed positions only for the logged-in user
-        positions = Position.objects.filter(user=request.user, close_date__isnull=False)
+        positions = Position.objects.filter(user=request.user, close_date__isnull=False, assigned="No")
 
         # Apply date filters if provided (using open_date)
         if start_date:

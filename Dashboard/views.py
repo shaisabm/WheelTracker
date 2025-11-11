@@ -184,11 +184,12 @@ class PositionViewSet(viewsets.ModelViewSet):
         open_positions = positions.filter(close_date__isnull=True).count()
         closed_positions = positions.filter(close_date__isnull=False).count()
 
-        # Calculate total realized P/L for closed positions excludes positions with assigned=Yes because the premium went toward the cost base of the shares
+        # Calculate total realized P/L for closed positions
+        # Excludes positions with assigned=Yes because the premium went toward the cost base of the shares
         closed_pos = positions.filter(close_date__isnull=False)
         realized_pl = Decimal('0.00')
         for pos in closed_pos:
-            if pos.profit_loss and (pos.assigned == "No"):
+            if pos.profit_loss and (pos.ASSIGNED_CHOICES == "No"):
                 realized_pl += pos.profit_loss
 
         # Calculate total unrealized P/L for open positions
@@ -213,8 +214,10 @@ class PositionViewSet(viewsets.ModelViewSet):
         for pos in open_pos:
             total_collateral += pos.collateral_requirement
 
-        # Calculate average AR for closed trades excludes positions with assigned=Yes
-        closed_with_ar = [pos for pos in closed_pos if (pos.ar_of_closed_trade is not None) and (pos.assigned == "No")]
+        # Calculate average AR for closed trades, excluding positions with assigned=Yes
+        closed_with_ar = [
+            pos for pos in closed_pos if (pos.ar_of_closed_trade is not None) and (pos.ASSIGNED_CHOICES == "No")
+        ]
         avg_ar = None
         if closed_with_ar:
             avg_ar = sum(pos.ar_of_closed_trade for pos in closed_with_ar) / len(closed_with_ar)

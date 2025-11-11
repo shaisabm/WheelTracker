@@ -189,7 +189,7 @@ class PositionViewSet(viewsets.ModelViewSet):
         closed_pos = positions.filter(close_date__isnull=False)
         realized_pl = Decimal('0.00')
         for pos in closed_pos:
-            if pos.profit_loss and (pos.ASSIGNED_CHOICES == "No"):
+            if pos.profit_loss and (pos.assigned == "No"):
                 realized_pl += pos.profit_loss
 
         # Calculate total unrealized P/L for open positions
@@ -216,7 +216,7 @@ class PositionViewSet(viewsets.ModelViewSet):
 
         # Calculate average AR for closed trades, excluding positions with assigned=Yes
         closed_with_ar = [
-            pos for pos in closed_pos if (pos.ar_of_closed_trade is not None) and (pos.ASSIGNED_CHOICES == "No")
+            pos for pos in closed_pos if (pos.ar_of_closed_trade is not None) and (pos.assigned == "No")
         ]
         avg_ar = None
         if closed_with_ar:

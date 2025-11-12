@@ -41,16 +41,28 @@
 	}
 
 	function getReturnPercentage(position) {
-		if (!position.collateral_requirement || position.collateral_requirement === 0) {
-			return null;
-		}
-
 		if (position.is_open) {
-			// For open positions: (premium / collateral) * 100
 			const premiumDollars = position.premium * position.num_contracts * 100;
+			// For Call options, the collateral at risk is the value of shares (strike * 100 * contracts)
+			if (position.type === 'C') {
+				const callCollateral = position.strike * position.num_contracts * 100;
+				return (premiumDollars / callCollateral) * 100;
+			}
+			// For Put options: (premium / collateral) * 100
+			if (!position.collateral_requirement || position.collateral_requirement === 0) {
+				return null;
+			}
 			return (premiumDollars / position.collateral_requirement) * 100;
 		} else {
 			// For closed positions: (P/L / collateral) * 100
+			if (position.type === 'C') {
+				const callCollateral = position.strike * position.num_contracts * 100;
+				return (position.profit_loss / callCollateral) * 100;
+			}
+			// For Put options
+			if (!position.collateral_requirement || position.collateral_requirement === 0) {
+				return null;
+			}
 			return (position.profit_loss / position.collateral_requirement) * 100;
 		}
 	}

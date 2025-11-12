@@ -273,7 +273,8 @@ class PositionViewSet(viewsets.ModelViewSet):
         end_date = request.query_params.get('end_date')
 
         # Start with closed positions only for the logged-in user
-        positions = Position.objects.filter(user=request.user, close_date__isnull=False, assigned="No")
+        # Include ALL closed positions (including assigned) for the count
+        positions = Position.objects.filter(user=request.user, close_date__isnull=False)
 
         # Apply date filters if provided (using open_date)
         if start_date:
@@ -296,13 +297,18 @@ class PositionViewSet(viewsets.ModelViewSet):
         position_count = 0
 
         for pos in positions:
-            # Use profit_loss which accounts for premium collected, premium paid to close, and all fees
-            profit = pos.profit_loss
-            collateral = pos.collateral_requirement
-
-            total_premium += profit
-            total_collateral += collateral
+            # Count all closed positions (including assigned)
             position_count += 1
+
+            # Only include P/L and collateral for non-assigned positions
+            # (Assigned position premiums go toward the cost base of shares)
+            if pos.assigned == "No":
+                # Use profit_loss which accounts for premium collected, premium paid to close, and all fees
+                profit = pos.profit_loss
+                collateral = pos.collateral_requirement
+
+                total_premium += profit
+                total_collateral += collateral
 
         # Calculate ROI
         roi_percentage = None

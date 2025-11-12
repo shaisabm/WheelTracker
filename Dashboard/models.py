@@ -110,7 +110,7 @@ class Position(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-open_date', 'stock']
+        ordering = ['-open_date']
         indexes = [
             models.Index(fields=['stock']),
             models.Index(fields=['open_date']),
@@ -222,7 +222,12 @@ class Position(models.Model):
             return None
 
         premium_dollars = self.premium * self.num_contracts * 100
-        collateral = self.collateral_requirement
+
+        # For covered calls, use the value of shares as collateral
+        if self.type == 'C':
+            collateral = self.strike * 100 * self.num_contracts
+        else:
+            collateral = self.collateral_requirement
 
         if collateral <= 0:
             return None
@@ -241,7 +246,12 @@ class Position(models.Model):
         if pl is None:
             return None
 
-        collateral = self.collateral_requirement
+        # For covered calls, use the value of shares as collateral
+        if self.type == 'C':
+            collateral = self.strike * 100 * self.num_contracts
+        else:
+            collateral = self.collateral_requirement
+
         if collateral <= 0:
             return None
 

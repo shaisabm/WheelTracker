@@ -119,7 +119,6 @@
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Close Date</th>
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Days (Open-Close)</th>
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiration</th>
-						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DTE</th>
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">P/L</th>
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AR%</th>
@@ -177,15 +176,9 @@
 							</td>
 							<td class="px-4 py-3 whitespace-nowrap">
 								<div class="text-sm text-gray-500">{formatDate(position.expiration)}</div>
-							</td>
-							<td class="px-4 py-3 whitespace-nowrap">
-								<div class="text-sm text-gray-900">
-									{#if position.is_open}
-										{position.days_to_expiration}
-									{:else}
-										-
-									{/if}
-								</div>
+								{#if position.days_to_expiration !== null && position.days_open_to_expiration !== null}
+									<div class="text-xs text-gray-500">{position.days_to_expiration}d / {position.days_open_to_expiration}d</div>
+								{/if}
 							</td>
 							<td class="px-4 py-3 whitespace-nowrap">
 								<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {statusBadge.class}">
@@ -249,7 +242,7 @@
 						<!-- Expandable row for additional details -->
 						{#if position.notes || position.assigned === 'Yes'}
 							<tr class="bg-gray-50">
-								<td colspan="16" class="px-4 py-3">
+								<td colspan="15" class="px-4 py-3">
 									<div class="text-sm text-gray-700">
 										<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 											{#if position.notes}

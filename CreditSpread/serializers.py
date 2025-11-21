@@ -7,6 +7,7 @@ class CreditSpreadSerializer(serializers.ModelSerializer):
     is_open = serializers.ReadOnlyField()
     days_in_trade = serializers.ReadOnlyField()
     days_to_expiration = serializers.ReadOnlyField()
+    days_open_to_expiration = serializers.ReadOnlyField()
     net_credit = serializers.ReadOnlyField()
     max_risk = serializers.ReadOnlyField()
     max_profit = serializers.ReadOnlyField()
@@ -45,6 +46,7 @@ class CreditSpreadSerializer(serializers.ModelSerializer):
             'is_open',
             'days_in_trade',
             'days_to_expiration',
+            'days_open_to_expiration',
             'net_credit',
             'max_risk',
             'max_profit',

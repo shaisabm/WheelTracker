@@ -37,6 +37,7 @@ class CreditSpreadSerializer(serializers.ModelSerializer):
             'short_close_premium',
             'close_fees',
             'notes',
+            'entry_price',
             'current_long_price',
             'current_short_price',
             'created_at',

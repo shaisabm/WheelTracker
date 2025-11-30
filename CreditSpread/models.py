@@ -153,6 +153,12 @@ class CreditSpread(models.Model):
         return max(0, days)
 
     @property
+    def days_open_to_expiration(self):
+        """Calculate the number of days from open_date to expiration (original DTE)"""
+        days = (self.expiration - self.open_date).days
+        return max(0, days)
+
+    @property
     def net_credit(self):
         """
         Calculate the net credit received when opening the spread.

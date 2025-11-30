@@ -95,6 +95,14 @@ class Position(models.Model):
         blank=True,
         help_text="Any notes or comments about the contract"
     )
+    entry_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=3,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal('0.00'))],
+        help_text="The stock price when you entered the position"
+    )
 
     # Calculated/fetched fields
     current_option_price = models.DecimalField(

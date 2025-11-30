@@ -152,6 +152,9 @@
 							</td>
 							<td class="px-4 py-3 whitespace-nowrap">
 								<div class="text-sm text-gray-900">${position.strike}</div>
+								{#if position.entry_price}
+									<div class="text-xs text-gray-500">@${position.entry_price}</div>
+								{/if}
 							</td>
 							<td class="px-4 py-3 whitespace-nowrap">
 								<div class="text-sm text-gray-900">{position.num_contracts}</div>

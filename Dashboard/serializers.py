@@ -65,6 +65,7 @@ class PositionSerializer(serializers.ModelSerializer):
             'premium_paid_to_close',
             'close_fees',
             'notes',
+            'entry_price',
             'created_at',
             'updated_at',
             # Calculated fields

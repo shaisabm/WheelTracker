@@ -14,6 +14,7 @@
 		type: position?.type || 'P',
 		num_contracts: position?.num_contracts || 1,
 		strike: position?.strike || '',
+		entry_price: position?.entry_price || '',
 		premium: position?.premium || '',
 		open_fees: position?.open_fees || '0.00',
 		close_date: position?.close_date || '',
@@ -28,6 +29,7 @@
 		open_date: '',
 		expiration: '',
 		strike: '',
+		entry_price: '',
 		num_contracts: position?.num_contracts || 1,
 		premium: '',
 		open_fees: '0.00',
@@ -73,6 +75,7 @@
 			open_date: '',
 			expiration: '',
 			strike: '',
+			entry_price: '',
 			num_contracts: position?.num_contracts || 1,
 			premium: '',
 			open_fees: '0.00',
@@ -148,6 +151,7 @@
 						type: formData.type,
 						num_contracts: rollData.num_contracts,
 						strike: rollData.strike,
+						entry_price: rollData.entry_price === '' ? null : rollData.entry_price,
 						premium: rollData.premium,
 						open_fees: rollData.open_fees,
 						close_date: null,
@@ -165,6 +169,7 @@
 					stock: formData.stock.toUpperCase(),
 					// Convert empty strings to null for optional fields
 					close_date: formData.close_date || null,
+					entry_price: formData.entry_price === '' ? null : formData.entry_price,
 					premium_paid_to_close: formData.premium_paid_to_close === '' ? null : formData.premium_paid_to_close,
 				};
 				onSave(data);
@@ -326,6 +331,22 @@
 						{#if errors.roll_strike}
 							<p class="text-red-500 text-xs mt-1">{errors.roll_strike}</p>
 						{/if}
+					</div>
+
+					<!-- Entry Price -->
+					<div>
+						<label for="roll-entry-price" class="block text-sm font-medium text-gray-700 mb-1">
+							Entry Price
+						</label>
+						<input
+							id="roll-entry-price"
+							type="number"
+							bind:value={rollData.entry_price}
+							step="0.001"
+							min="0"
+							placeholder="Stock price at entry"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+						/>
 					</div>
 
 					<!-- Contracts -->
@@ -558,6 +579,23 @@
 			{#if errors.strike}
 				<p class="text-red-500 text-xs mt-1">{errors.strike}</p>
 			{/if}
+		</div>
+
+		<!-- Entry Price -->
+		<div>
+			<label for="entry-price" class="block text-sm font-medium text-gray-700 mb-1">
+				Entry Price
+			</label>
+			<input
+				id="entry-price"
+				type="number"
+				bind:value={formData.entry_price}
+				step="0.001"
+				min="0"
+				placeholder="Stock price at entry"
+				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+			/>
+			<p class="text-xs text-gray-500 mt-1">Stock price when you entered the position</p>
 		</div>
 
 		<!-- Premium -->
